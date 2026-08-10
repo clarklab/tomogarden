@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plant Pals 🌱 — my outdoor plant tracker</title>
+<meta name="description" content="A cute geometric tracker for my Jonestown, TX plants — with live freeze, rain & heat alerts and an AI photo Plant Check.">
+<link rel="canonical" href="https://tomogarden.netlify.app/">
+<meta property="og:title" content="Plant Pals 🌱 — Tomogarden">
+<meta property="og:description" content="A cute tracker for our Jonestown, TX garden — live freeze, rain & heat alerts plus an AI photo Plant Check.">
+<meta property="og:image" content="https://tomogarden.netlify.app/ogimage.jpg">
+<meta property="og:url" content="https://tomogarden.netlify.app/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tomogarden">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Fraunces = free warm-serif stand-in for Recoleta (swap in real Recoleta @font-face if licensed) -->
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..700,50,1&family=Nunito:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#faf3e2; --cream2:#f3e9d2; --paper:#fffdf7;
+  --ink:#43392c; --ink-soft:#8a7d68; --line:#e5d8bd;
+  --green:#4f9d55; --green-d:#357a45;
+  --ochre:#e0a731; --terra:#d0593a; --blue:#4f8fd0; --purple:#7d6bd0; --pink:#eda6c0;
+  --ok:#4f9d55; --warn:#e0a731; --bad:#d8433a; --pot:#b06e3c;
+  --shadow:0 6px 18px rgba(90,70,40,.10); --r:20px;
+}
+*{box-sizing:border-box} html,body{margin:0}
+body{font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:var(--cream);min-height:100vh;-webkit-font-smoothing:antialiased;position:relative}
+.decor{position:absolute;top:0;left:0;width:100%;height:200px;z-index:0;pointer-events:none}
+.wrap{max-width:1120px;margin:0 auto;padding:18px 16px 90px;position:relative;z-index:1}
+.ms{width:1.15em;height:1.15em;display:inline-block;vertical-align:-0.2em;fill:currentColor;flex:none}
+h1,h2,.serif{font-family:'Fraunces',Georgia,serif;font-weight:600}
+
+header{text-align:center;padding:18px 0 8px}
+header h1{font-size:clamp(34px,7vw,58px);margin:.1em 0;color:var(--green-d);letter-spacing:-.5px;font-variation-settings:'SOFT' 60,'WONK' 1,'opsz' 100}
+header p{margin:.1em 0;color:var(--ink-soft);font-weight:700;font-size:15px}
+
+/* weather */
+.wx-shell{background:var(--paper);border:1px solid var(--line);border-radius:26px;padding:14px;box-shadow:var(--shadow);margin:14px 0 12px}
+#weather{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.wx-now{display:flex;flex-direction:column;gap:2px;min-width:150px}
+.wx-place{font-weight:800;font-size:13px;color:var(--ink-soft);display:flex;align-items:center;gap:4px}
+.wx-place .ms{font-size:17px;color:var(--terra)}
+.wx-temp{font-family:'Fraunces',serif;font-size:34px;font-weight:600;display:flex;align-items:center;gap:8px}
+.wx-temp .ms{font-size:32px;color:var(--ochre)}
+.wx-cond{font-weight:700;color:var(--ink-soft);font-size:14px}
+.wx-strip{display:flex;gap:7px;flex:1;overflow-x:auto;justify-content:flex-end;padding-bottom:2px}
+.wx-day{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--cream);border:1px solid var(--line);border-radius:15px;padding:8px 9px;min-width:58px}
+.wx-day.freeze{background:#e3eefb;border-color:#bcd6f5}.wx-day.hot{background:#fbe6d6;border-color:#f0c39c}
+.wx-dow{font-weight:800;font-size:11px}
+.wx-day .ms{font-size:19px;color:var(--ochre)} .wx-day.freeze .ms{color:var(--blue)} .wx-day.hot .ms{color:var(--terra)}
+.wx-hilo b{font-size:12.5px}.wx-hilo i{font-size:11px;color:var(--ink-soft);margin-left:3px;font-style:normal}
+.wx-rain{font-size:10px;color:var(--ink-soft);font-weight:800;display:flex;align-items:center;gap:1px}
+.wx-rain .ms{font-size:11px;color:var(--blue)} .wx-rain.on{color:var(--blue)}
+.wx-offline{padding:8px;font-weight:700;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+
+/* alerts — centered */
+#alerts{display:flex;flex-direction:column;gap:9px;margin:8px 0 20px}
+.alert{display:flex;gap:10px;align-items:center;justify-content:center;text-align:center;padding:13px 16px;border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow);font-weight:600;line-height:1.4;font-size:14.5px;background:var(--paper)}
+.alert .ms{font-size:24px}
+.alert.freeze{background:#eaf2fc}.alert.freeze .ms{color:var(--blue)}
+.alert.rain{background:#eef4fc}.alert.rain .ms{color:var(--blue)}
+.alert.heat{background:#fcefe2}.alert.heat .ms{color:var(--terra)}
+.alert.calm{background:#eef6e8}.alert.calm .ms{color:var(--green)}
+.alert b{font-weight:800}
+.alert-link{background:var(--green-d);color:#fff;border:none;border-radius:20px;padding:5px 12px;font-family:inherit;font-weight:800;cursor:pointer;margin-left:8px;font-size:12.5px}
+.alert-link:hover{filter:brightness(1.08)}
+
+/* sections */
+.sec-h{display:flex;align-items:center;gap:10px;margin:30px 2px 14px;flex-wrap:wrap}
+.sec-dot{width:12px;height:12px;border-radius:50%;flex:none}
+.sec-h h2{font-size:26px;margin:0;color:var(--ink)}
+.sec-h .sub{color:var(--ink-soft);font-weight:700;font-size:13.5px}
+.add-btn{margin-left:auto;background:var(--green);color:#fff;border:none;border-radius:22px;padding:9px 16px;font-family:'Nunito';font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:var(--shadow)}
+.add-btn .ms{font-size:20px}
+.add-btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+
+/* filters */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 2px 16px}
+.filter{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:8px 15px;font-family:inherit;font-weight:800;cursor:pointer;font-size:13.5px;color:var(--ink)}
+.filter.on{background:var(--green);color:#fff;border-color:var(--green)}
+.filter:hover{transform:translateY(-1px)}
+
+/* grid — cards centered */
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:16px}
+.card{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 14px;cursor:pointer;text-align:center;box-shadow:var(--shadow);font-family:inherit;color:var(--ink);transition:transform .1s,box-shadow .1s}
+.card:hover{transform:translateY(-4px);box-shadow:0 12px 26px rgba(90,70,40,.16)}
+.tile{background:radial-gradient(circle at 50% 42%, #fbeede, #f1e6cd);border-radius:15px;padding:6px;margin-bottom:9px;position:relative}
+.sprite{width:100%;height:auto;display:block}
+.tile .sprite{width:96px;height:96px;margin:0 auto}
+.card-body{text-align:center}
+.card-name{font-family:'Fraunces',serif;font-weight:600;font-size:16.5px;line-height:1.15}
+.status-row{display:flex;justify-content:center;gap:5px;margin-top:6px}
+.card-rule{border:none;border-top:1px solid var(--line);margin:9px 4px 10px}
+.card-chips{display:flex;flex-direction:column;gap:5px;align-items:center}
+.chip{font-size:11.5px;font-weight:800;border-radius:13px;padding:4px 9px;display:inline-flex;align-items:center;gap:4px;line-height:1.2}
+.chip .ms{font-size:15px}
+.chip.sun{background:#fdf3d9;color:#9a731a}.chip.sun .ms{color:var(--ochre)}
+.chip.ok{background:#e6f4e2;color:#357a45}.chip.ok .ms{color:var(--ok)}
+.chip.warn{background:#fbeed2;color:#96691a}.chip.warn .ms{color:var(--warn)}
+.chip.bad{background:#fbe0dc;color:#a4362c}.chip.bad .ms{color:var(--bad)}
+.chip.pot{background:#efe9f9;color:#5b4b9a}.chip.pot .ms{color:var(--purple)}
+.tag{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;width:22px;height:22px}
+.tag .ms{font-size:15px}
+.tag.tox{background:#fbe0dc;color:var(--bad)}
+.tag.weed{background:#e6f4e2;color:var(--green-d)}
+.flag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11px;font-weight:800;border-radius:14px;padding:3px 10px;box-shadow:var(--shadow);display:flex;align-items:center;gap:3px;z-index:2}
+.flag .ms{font-size:14px}
+.flag.in{background:#bcd8fb;color:#1c4a86}.flag.cover{background:#dce8fb;color:#2a5a97}
+.card-check{position:absolute;top:8px;right:8px;background:var(--cream);border:1px solid var(--line);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;box-shadow:var(--shadow)}
+.card-check .ms{font-size:18px;color:var(--green-d)}
+.card-check:hover{background:var(--green)}.card-check:hover .ms{color:#fff}
+.empty{grid-column:1/-1;text-align:center;padding:30px;color:var(--ink-soft);font-weight:700}
+.add-card{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;border:2px dashed var(--green);background:#f2f8ee;color:var(--green-d);min-height:220px;font-family:'Fraunces',serif;font-size:17px;font-weight:600}
+.add-card .ms{font-size:40px}
+
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(67,57,44,.42);display:none;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto;z-index:50;backdrop-filter:blur(2px)}
+#modal.show{display:flex}
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:26px;max-width:560px;width:100%;padding:22px;position:relative;box-shadow:0 20px 50px rgba(67,57,44,.3);margin:auto}
+.close{position:absolute;top:14px;right:14px;background:var(--cream);border:1px solid var(--line);border-radius:50%;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.close .ms{font-size:20px;color:var(--ink-soft)}
+.close:hover{background:var(--cream2)}
+/* detail header — Option D: illustration left, name + LEFT-aligned tags right */
+.sheet-top{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;text-align:left}
+.sheet-sprite{background:radial-gradient(circle at 50% 42%, #fbeede, #f1e6cd);border:1px solid var(--line);border-radius:18px;padding:8px;flex:none}
+.sprite.big{width:118px;height:118px}
+.sheet h2{font-size:27px;margin:0 0 4px;color:var(--ink);line-height:1.15}
+.latin{font-style:italic;color:var(--ink-soft);font-size:13.5px}
+.type-pill{display:inline-block;background:#eef6e8;border:1px solid #cfe6c4;border-radius:14px;padding:3px 11px;font-weight:800;font-size:12px;margin:7px 0;color:var(--green-d)}
+.head-chips{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-start;margin:2px 0 7px}
+.vibe{font-family:'Fraunces',serif;font-style:italic;color:var(--purple);font-size:15.5px}
+.statcard{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--cream);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.stat{display:flex;flex-direction:column;gap:3px}
+.stat-k{font-weight:800;font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px}
+.stat-v{font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.stat-v .ms{font-size:18px}
+.stat-v.ok{color:var(--green-d)}.stat-v.warn{color:#96691a}.stat-v.bad{color:var(--bad)}
+.meter{display:inline-flex;gap:2px;align-items:center}.meter .pip{display:inline-flex;font-size:15px}
+.meter .pip.on{color:var(--ochre)}.meter .pip.on.w{color:var(--blue)}.meter .pip.off{color:#d9cdb2}
+.plan{display:flex;gap:11px;align-items:flex-start;background:#eaf2fc;border:1px solid #cfe0f5;border-radius:16px;padding:13px;margin-bottom:12px;font-weight:600;font-size:14px;line-height:1.45}
+.plan .ms{font-size:22px;color:var(--blue)}
+.plan.bringin{background:#dbe8fb}.plan.cover{background:#e6eefc}.plan.fine{background:#eef6e8}.plan.fine .ms{color:var(--green)}
+.note{line-height:1.6;font-weight:500;font-size:15px;color:#54473a;margin:0 0 14px}
+.gcap{font-weight:800;font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin:2px 0 7px}
+.gcap span{font-weight:700;text-transform:none;letter-spacing:0}
+.gallery{display:flex;gap:8px;margin-bottom:16px}
+.gallery .ph{flex:1;height:78px;border-radius:12px;overflow:hidden;border:1px solid var(--line);display:block;background:#eee6d2}
+.gallery .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.sheet-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:none;border-radius:16px;padding:12px 16px;font-family:'Nunito';font-weight:800;font-size:14.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn .ms{font-size:20px}
+.btn.primary{background:var(--green);color:#fff}.btn.ghost{background:var(--cream);color:var(--ink);border:1px solid var(--line)}.btn.danger{background:#fbe0dc;color:var(--bad)}
+.btn:hover{filter:brightness(1.05)}
+
+/* Plant Check */
+.check-drop{border:2px dashed var(--green);background:#f2f8ee;border-radius:18px;padding:26px 16px;text-align:center;cursor:pointer;margin:6px 0 14px;display:block}
+.check-drop .ms{font-size:40px;color:var(--green-d)}
+.check-drop p{margin:6px 0 0;font-weight:700;color:var(--green-d)}
+.check-drop small{color:var(--ink-soft);font-weight:600}
+.check-preview{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px}
+.check-preview img{width:120px;height:120px;object-fit:cover;border-radius:16px;border:1px solid var(--line)}
+.result-chip{display:inline-flex;align-items:center;gap:6px;font-family:'Fraunces',serif;font-size:19px;font-weight:600;padding:6px 12px;border-radius:14px;margin-bottom:8px}
+.result-chip .ms{font-size:21px}
+.res-healthy{background:#e6f4e2;color:var(--green-d)}.res-thirsty{background:#eaf2fc;color:#1c4a86}
+.res-stress{background:#fbeed2;color:#96691a}.res-pest{background:#fbe0dc;color:var(--bad)}.res-info{background:var(--cream);color:var(--ink-soft)}
+.check-tips{margin:4px 0 0;padding-left:18px;line-height:1.5;font-weight:600;font-size:14px}.check-tips li{margin-bottom:5px}
+.disclaimer{font-size:12px;color:var(--ink-soft);font-weight:600;margin-top:12px;line-height:1.4;display:flex;gap:6px;align-items:flex-start}
+.disclaimer .ms{font-size:15px;flex:none;margin-top:1px}
+.spinner{width:34px;height:34px;border:4px solid #e5d8bd;border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:14px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* add form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px}
+.field{display:flex;flex-direction:column;gap:4px}.field.full{grid-column:1/-1}
+.field label{font-weight:800;font-size:12px;color:var(--ink-soft)}
+.field input,.field select,.field textarea{font-family:'Nunito';font-weight:600;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:12px;background:var(--cream);color:var(--ink)}
+.field textarea{resize:vertical;min-height:52px}
+.cbx{font-weight:700;font-size:13px;display:flex;gap:5px;align-items:center}
+.mini-drop{display:flex;align-items:center;gap:10px;border:2px dashed var(--green);background:#f2f8ee;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:700;color:var(--green-d)}
+.mini-drop .ms{font-size:22px}
+.ferr{color:var(--bad);font-weight:700;font-size:13px;margin:8px 0 0;display:none}
+
+/* septic */
+.septic-row{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.septic-row.bad{background:#fcecea}.septic-row.warn{background:#fcf3e0}.septic-row.ok{background:#eef6e8}
+.septic-head{font-family:'Fraunces',serif;font-weight:600;font-size:18px;display:flex;align-items:center;gap:7px}
+.septic-head .ms{font-size:22px}
+.septic-row.bad .septic-head .ms{color:var(--bad)}.septic-row.warn .septic-head .ms{color:var(--warn)}.septic-row.ok .septic-head .ms{color:var(--ok)}
+.septic-desc{color:#6a5d48;font-weight:600;font-size:13.5px;margin:3px 0 10px}
+.septic-plants{display:flex;gap:10px;flex-wrap:wrap}
+.mini{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:7px 11px 5px;cursor:pointer;font-family:'Nunito';font-weight:800;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.mini .tile{width:52px;height:52px;margin:0;padding:3px}.sprite.mini-s{width:46px;height:46px}
+.mini:hover{transform:translateY(-2px)}
+
+/* More to Grow */
+.more-group{margin-bottom:20px}
+.more-head{font-family:'Fraunces',serif;font-weight:600;font-size:19px;display:flex;align-items:center;gap:8px;margin:0 2px 12px;color:var(--ink)}
+.more-head .ms{font-size:22px}
+.more-group:first-child .more-head .ms{color:var(--ochre)} .more-group:last-child .more-head .ms{color:var(--blue)}
+.more-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
+.shade-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:13px;box-shadow:var(--shadow);text-align:center}
+.shade-card .tile .sprite{width:84px;height:84px}
+.shade-name{font-family:'Fraunces',serif;font-weight:600;font-size:16.5px}
+.shade-latin{font-style:italic;color:var(--ink-soft);font-size:12px;margin-bottom:6px}
+.shade-tag{display:inline-flex;align-items:center;gap:4px;border-radius:12px;padding:2px 9px;font-weight:800;font-size:11px;margin-bottom:6px}
+.shade-tag .ms{font-size:14px}
+.shade-tag.sun{background:#fdf3d9;color:#9a731a}.shade-tag.sun .ms{color:var(--ochre)}
+.shade-tag.shade{background:#eef1fb;color:#3f5a97}.shade-tag.shade .ms{color:var(--blue)}
+.shade-why{font-weight:600;font-size:13px;line-height:1.5;color:#54473a}
+
+.intro{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:13px 17px;font-weight:600;color:#54473a;line-height:1.55;font-size:14px}
+footer{text-align:center;color:var(--ink-soft);font-weight:700;font-size:12.5px;margin-top:34px;line-height:1.7}
+
+@media(max-width:520px){
+  .statcard,.form-grid{grid-template-columns:1fr}
+  .sheet-top{flex-direction:column;text-align:center;align-items:center}
+  .head-chips{justify-content:center}
+  .wx-strip{justify-content:flex-start}
+  .add-btn{margin-left:0}
+}
+
+</style>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🌱</text></svg>">
+</head>
+<body>
+<!-- decorative geometric confetti -->
+<svg class="decor" viewBox="0 0 1200 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <circle cx="80" cy="60" r="26" fill="#e6a92b" opacity=".35"/>
+  <path d="M180 40 a26 26 0 0 1 52 0 Z" fill="#4f9d55" opacity=".35"/>
+  <circle cx="320" cy="30" r="14" fill="#d8433a" opacity=".35"/>
+  <circle cx="1080" cy="70" r="30" fill="#4f8fd0" opacity=".3"/>
+  <path d="M980 30 h48 v48 Z" fill="#eda6c0" opacity=".4"/>
+  <circle cx="1150" cy="30" r="12" fill="#c2c84e" opacity=".5"/>
+</svg>
+
+<div class="wrap">
+
+  <header>
+    <h1>Plant Pals</h1>
+    <p>my little garden crew · Jonestown, TX</p>
+  </header>
+
+  <div class="wx-shell">
+    <div id="weather"><div class="wx-offline">Loading Jonestown weather…</div></div>
+  </div>
+
+  <div id="alerts"></div>
+
+  <div class="sec-h">
+    <span class="sec-dot" style="background:#4f9d55"></span>
+    <h2>My Plants</h2>
+    <span class="sub">(<span id="count">0</span> pals — tap for stats)</span>
+    <button id="addBtn" class="add-btn"><svg class="ms" viewBox="0 0 24 24"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7Z"/></svg> Add a plant</button>
+  </div>
+  <div class="filters">
+    <button class="filter on" data-f="all">All</button>
+    <button class="filter" data-f="ground">In the ground</button>
+    <button class="filter" data-f="potted">Potted</button>
+    <button class="filter" data-f="attention">Needs cold care</button>
+    <button class="filter" data-f="weeds">Volunteers</button>
+  </div>
+  <div id="grid"></div>
+
+  <div class="sec-h">
+    <span class="sec-dot" style="background:#d0593a"></span>
+    <h2>Septic Field Check</h2>
+    <span class="sub">what's safe over the drain field</span>
+  </div>
+  <div id="septic"></div>
+
+  <div class="sec-h">
+    <span class="sec-dot" style="background:#7d6bd0"></span>
+    <h2>More to Grow</h2>
+    <span class="sub">fun Central-TX plants to add — grouped by sun &amp; shade</span>
+  </div>
+  <p class="intro">Plants you don't have yet that would be great additions — all tough, low-water Central-Texas picks. Each is tagged for where it'll thrive, so you can match it to the right spot (that bright bed or the shady north side).</p>
+  <div id="more"></div>
+
+  <footer>
+    Made with 💚 for Clark's garden · weather live from Open-Meteo · Plant Check powered by AI on Netlify<br>
+    Tap a plant for its full care card · real photos via Wikimedia Commons · use the 🔍 to diagnose a photo.
+  </footer>
+</div>
+
+<div id="modal"></div>
+<script>
+/* ============================================================
+   Flat geometric plant sprites (viewBox 0 0 100 100)
+   ============================================================ */
+const P = {
+  green:'#4f9d55', greenDk:'#357a45', greenLt:'#8fc06a', sage:'#9ec089',
+  cactus:'#6fae5f', cactusDk:'#4f8f46',
+  agave:'#82b2a3', agaveDk:'#5c8a7b',
+  leafEdge:'#cbd66a',
+  red:'#d8433a', redDk:'#b23227',
+  terra:'#d0593a', terraDk:'#b0472c',
+  mustard:'#e6a92b', mustardLt:'#f2c14e', ochre:'#d89a2a',
+  gold:'#c2c84e', goldLt:'#dbe07a',
+  pink:'#eda6c0', pinkLt:'#f7cad9', rose:'#e0708f', roseLt:'#f4a9c0',
+  blue:'#4f8fd0', blueLt:'#8fc4e8',
+  purple:'#7d6bd0', purpleLt:'#a89be6', lav:'#b9a7e8',
+  cream:'#faf3e2', white:'#ffffff', ink:'#3a332c', soil:'#8a6a45',
+  pot:'#cf8a54', potDk:'#b06e3c', potHi:'#e0aa72', bark:'#8a5a34', barkDk:'#6f4a2c'
+};
+const c  = (x,y,r,f,o='')=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" ${o}/>`;
+const e  = (x,y,rx,ry,f,o='')=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${f}" ${o}/>`;
+const rr = (x,y,w,h,f,rad=0,o='')=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rad}" fill="${f}" ${o}/>`;
+const pl = (pts,f,o='')=>`<polygon points="${pts}" fill="${f}" ${o}/>`;
+const pa = (d,f,o='')=>`<path d="${d}" fill="${f}" ${o}/>`;
+const ln = (d,col,w,o='')=>`<path d="${d}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" ${o}/>`;
+const G  = (t,inner)=>`<g transform="${t}">${inner}</g>`;
+const gnd= ()=>e(50,90,26,4.5,'rgba(58,51,44,.10)');
+const rad= a=>a*Math.PI/180;
+
+function vleaf(len,wid,fill){ return pa(`M0,0 C ${-wid},${-len*0.45} ${-wid*0.5},${-len} 0,${-len} C ${wid*0.5},${-len} ${wid},${-len*0.45} 0,0 Z`, fill); }
+function leaf(cx,cy,len,wid,rot,fill,vein){
+  let s = pa(`M0,${-len} C ${wid},${-len*0.35} ${wid},${len*0.35} 0,${len} C ${-wid},${len*0.35} ${-wid},${-len*0.35} 0,${-len} Z`, fill);
+  if(vein) s += ln(`M0,${-len*0.7} L0,${len*0.7}`, vein, 2.4);
+  return G(`translate(${cx},${cy}) rotate(${rot})`, s);
+}
+function pot(){ return pl('35,70 65,70 61,93 39,93', P.pot)+rr(31,64,38,8,P.potDk,3)+rr(31,64,38,3.4,P.potHi,2); }
+function soilBase(){ return e(50,87,15,4,P.soil); }
+function petalDown(rot,L){
+  const inner = pa(`M0,0 C 4,${L*0.35} 4,${L*0.8} 0,${L} C -4,${L*0.8} -4,${L*0.35} 0,0 Z`, P.red) + e(0,L*0.82,3,4.2,P.mustardLt);
+  return G(`translate(50,44) rotate(${rot})`, inner);
+}
+function star5(cx,cy,pr,pw,fill,center){ let s=''; for(let a=0;a<360;a+=72){ s+=G(`translate(${cx},${cy}) rotate(${a})`, e(0,-pr,pw,pr*0.9,fill)); } return s+c(cx,cy,pw*0.9,center||P.mustardLt); }
+function berries(cx,cy,col,n){ const pts=[[0,0],[6,2],[3,7],[-4,4],[-6,-2],[2,-5],[8,6],[-2,10]]; let s=''; for(let i=0;i<(n||6);i++){const p=pts[i%pts.length]; s+=c(cx+p[0],cy+p[1],2.6,col);} return s; }
+function funnelBloom(petal,throat,crease){
+  let s = gnd() + ln('M26,86 C 42,66 30,52 46,44',P.green,4)
+    + pa('M30,60 L21,52 L30,48 L35,56 Z',P.greenDk)
+    + G('translate(60,40)', pl('-5,10 5,10 3,20 -3,20',P.green));
+  s += G('translate(60,38)', e(0,0,16,15,petal)
+      + Array.from({length:5},(_,i)=>ln(`M0,0 L${15*Math.cos(rad(i*72-90))},${15*Math.sin(rad(i*72-90))}`,crease,1.8)).join('')
+      + c(0,0,5,throat) + c(0,0,2,P.mustard));
+  return s;
+}
+
+const FORMS = {
+  cactus(){ return gnd()
+    + e(50,62,19,24,P.cactus) + e(33,47,12,16,P.cactusDk) + e(66,45,13,17,P.cactus)
+    + c(50,50,1.7,P.cream)+c(49,66,1.7,P.cream)+c(44,74,1.7,P.cream)+c(33,45,1.5,P.cream)+c(66,43,1.5,P.cream)+c(67,54,1.5,P.cream)
+    + c(66,27,6,P.pink)+c(66,27,2.6,P.mustardLt); },
+
+  agave(){ let s=gnd(); [-66,-44,-22,0,22,44,66].forEach(r=> s+=G(`translate(50,78) rotate(${r})`,
+      pl('0,6 -7,-42 0,-52 7,-42',P.agave)+pl('0,2 -2.5,-40 0,-46 2.5,-40',P.agaveDk)+pl('0,-52 -2.5,-46 2.5,-46',P.terraDk))); return s; },
+
+  // Red dragon flower (Huernia): tubular constant-width stems + red flowers at base
+  dragon(){ let s=gnd()+soilBase();
+    s += ln('M50,86 C 48,64 46,48 48,34',P.cactus,7) + ln('M50,86 C 40,66 34,52 34,40',P.cactusDk,7)
+       + ln('M50,86 C 60,66 66,52 66,42',P.cactus,7) + ln('M50,84 C 52,66 58,54 62,46',P.cactusDk,7)
+       + ln('M50,84 C 44,68 40,58 39,50',P.cactus,7);
+    [[48,40],[47,52],[34,46],[35,56],[66,48],[63,52],[40,56]].forEach(([x,y])=> s+=pl(`${x-1.4},${y} ${x+1.4},${y} ${x},${y-3}`,P.cactusDk));
+    const rf=(cx,cy)=>{let f='';for(let a=0;a<360;a+=72)f+=G(`translate(${cx},${cy}) rotate(${a})`,pl('0,-3.2 -1.7,0.5 1.7,0.5',P.red));return f+c(cx,cy,1.5,P.redDk);};
+    s += rf(42,80)+rf(57,82)+rf(50,84); return s; },
+
+  firestick(){ let s=gnd();
+    const g=(x1,y1,x2,y2,col,w)=>ln(`M${x1},${y1} L${x2},${y2}`,col,w||5);
+    s += g(50,88,50,40,P.green)
+      + g(50,58,36,40,P.green)+g(50,54,64,38,P.green)
+      + g(36,40,28,24,P.green)+g(36,40,44,24,P.green)+g(64,38,58,22,P.green)+g(64,38,72,24,P.green)
+      + g(50,40,50,24,P.green)+g(50,30,42,16,P.green)+g(50,30,58,16,P.green)
+      + g(28,24,24,14,P.greenLt,4.5)+g(44,24,46,12,P.greenLt,4.5)+g(58,22,56,12,P.greenLt,4.5)+g(72,24,76,14,P.greenLt,4.5)+g(42,16,40,8,P.greenLt,4.5)+g(58,16,60,8,P.greenLt,4.5)
+      + g(24,14,22,9,P.terra,4)+g(46,12,46,7,P.terra,4)+g(56,12,56,7,P.terra,4)+g(76,14,78,9,P.terra,4)+g(40,8,39,4,P.terra,4)+g(60,8,61,4,P.terra,4);
+    return s; },
+
+  snake(){ let s=gnd()+soilBase();
+    const blade=(h,w,col)=> pa(`M${-w},0 L${-w},${-h+6} Q 0,${-h} ${w},${-h+6} L${w},0 Z`,col)+ln(`M0,-4 L0,${-h+9}`,P.greenLt,1.5);
+    s += G('translate(40,86)',blade(52,4,P.greenDk))+G('translate(47,86)',blade(60,4.6,P.green))
+       + G('translate(54,86)',blade(56,4.6,P.greenDk))+G('translate(61,86)',blade(50,4,P.green))
+       + G('translate(44,86)',blade(42,4,P.greenDk))+G('translate(50,86)',blade(47,4.4,P.green))+G('translate(57,86)',blade(40,4,P.greenDk))
+       + G('translate(35,86) rotate(-20)',blade(24,3.4,P.green))+G('translate(65,86) rotate(20)',blade(24,3.4,P.greenDk));
+    return s; },
+
+  rose(){ let s=gnd()+ln('M50,88 L50,50',P.green,3.5)+ln('M50,62 L38,52',P.green,3)+ln('M50,58 L62,48',P.green,3);
+    s += leaf(35,60,9,5,-42,P.green)+leaf(65,58,9,5,42,P.greenDk)+leaf(50,72,8,4,0,P.green);
+    const bloom=(cx,cy,r)=>{let b=c(cx,cy,r,P.red);for(let a=0;a<360;a+=60)b+=c(cx+r*0.75*Math.cos(rad(a)),cy+r*0.75*Math.sin(rad(a)),r*0.34,P.red);return b+c(cx,cy,r*0.62,P.rose)+c(cx,cy,r*0.3,P.roseLt);};
+    s += bloom(50,39,13)+bloom(35,50,8.5)+bloom(65,50,8.5); return s; },
+
+  pomegranate(){ let s=gnd()+leaf(66,42,10,4,35,P.green)+leaf(36,44,9,4,-35,P.greenDk)
+      + c(50,58,21,P.terra)+pa('M31,60 A21,21 0 0 0 69,60 A30,30 0 0 1 31,60 Z',P.terraDk)
+      + c(43,50,4.5,'rgba(255,255,255,.25)')+pl('44,40 47,32 50,40 53,32 56,40',P.redDk)+rr(47,38,6,5,P.redDk,1); return s; },
+
+  // Sunshine ligustrum: branchy, green leaves, yellow tips
+  ligustrum(){ let s=gnd()+rr(48,62,4,24,P.bark,2);
+    const branch=(x2,y2,rot)=>{ let b=ln(`M50,66 Q ${(50+x2)/2},${(66+y2)/2-5} ${x2},${y2}`,P.bark,2.4);
+      return b+leaf(x2-3,y2+1,6.5,3,rot-24,P.green)+leaf(x2+3,y2+1,6.5,3,rot+24,P.greenDk)+leaf(x2,y2-4,6.5,3,rot,P.goldLt); };
+    s += branch(30,44,-22)+branch(41,35,-9)+branch(59,35,9)+branch(70,44,22)+branch(50,29,0); return s; },
+
+  beautyberry(){ let s=gnd()+ln('M50,84 C 44,60 40,44 34,30',P.greenDk,4)+ln('M50,84 C 56,60 60,44 66,30',P.greenDk,4);
+    s += leaf(34,48,10,5,-30,P.green)+leaf(66,48,10,5,30,P.green)+leaf(50,40,10,5,0,P.greenLt);
+    s += berries(37,40,P.purple,7)+berries(63,40,P.purple,7)+berries(50,58,P.purpleLt,6); return s; },
+
+  coralberry(){ let s=gnd()+c(50,58,17,P.green)+c(36,62,11,P.greenDk)+c(64,62,11,P.green)+c(50,48,13,P.greenLt);
+    s += berries(40,66,P.terra,6)+berries(60,64,P.terra,6)+berries(50,72,P.red,4); return s; },
+
+  // Mexican hat: green bumpy pistil sticking UP, red petals drooping DOWN
+  mexicanhat(){ let s=gnd()+rr(48.5,50,3,42,P.green,2)+leaf(40,72,8,3,-35,P.green)+leaf(60,74,8,3,35,P.green);
+    [150,166,180,194,210].forEach(r=> s+=petalDown(r,15));
+    s += rr(47.4,27,5.2,17,P.greenDk,2.6);                       // pistil column
+    for(let i=0;i<5;i++) s+= c(48+(i%2?2.6:0.6),29+i*3,1.4,P.green); // bumps
+    s += e(50,26,3,2.4,P.greenLt); return s; },                  // domed tip
+
+  salvia(){ let s=gnd()+rr(48.5,52,3,40,P.green,2)+leaf(39,66,9,5,-35,P.green)+leaf(61,66,9,5,35,P.greenDk);
+    for(let i=0;i<6;i++) s+=e(50,46-i*6,6.5-i*0.4,5,i%2?P.purple:P.purpleLt); return s+c(50,10,3,P.lav); },
+
+  cedarsage(){ let s=gnd()+rr(48.5,54,3,36,P.green,2)+leaf(38,64,10,7,-30,P.green)+leaf(62,64,10,7,30,P.greenDk);
+    for(let i=0;i<5;i++) s+=e(50,48-i*6,6-i*0.3,5,i%2?P.red:P.terra); return s; },
+
+  skullcap(){ let s=gnd()+c(50,66,15,P.sage)+c(37,70,10,P.sage)+c(63,70,10,P.green)+c(50,58,11,P.greenLt);
+    for(let i=0;i<4;i++) s+=e(50,50-i*6,5-i*0.3,4.4,i%2?P.lav:P.purpleLt); return s; },
+
+  // Trailing lantana: bushy, branches + several flower clusters
+  lantana(){ let s=gnd()+ln('M50,88 L50,54',P.green,3.5)+ln('M50,64 L38,52',P.green,3)+ln('M50,60 L63,50',P.green,3);
+    s += leaf(35,58,7,4,-42,P.green)+leaf(65,56,7,4,42,P.greenDk)+leaf(50,70,7,4,0,P.green);
+    const cl=(cx,cy)=>{let u='';[[0,-4],[-4,0],[4,0],[-2,4],[2,4],[0,1]].forEach(([dx,dy])=>u+=c(cx+dx,cy+dy,3,P.white)+c(cx+dx,cy+dy,1.2,P.mustardLt));return u+c(cx-5,cy-2,2,P.pink)+c(cx+5,cy-1,2,P.pink);};
+    s += cl(50,42)+cl(35,49)+cl(65,47); return s; },
+
+  // Dayflower: small bloom + a face-on fully open blue flower
+  dayflower(){ let s=gnd()+ln('M50,86 C 40,64 36,50 40,34',P.green,4)+ln('M50,86 C 60,66 64,52 60,38',P.greenDk,4);
+    s += c(38,34,5.5,P.blue)+c(45,34,5.5,P.blue)+e(41.5,40,3.6,2.6,P.blueLt)+c(39,37,1.3,P.mustard)+c(44,37,1.3,P.mustard);
+    const cx=62,cy=41;
+    s += c(cx-5,cy-3,6.4,P.blue)+c(cx+5,cy-3,6.4,P.blue)+e(cx,cy+5,5.4,4,P.blueLt)
+       + c(cx,cy,2.4,P.white)+c(cx-2.4,cy-1,1.4,P.mustard)+c(cx+2.4,cy-1,1.4,P.mustard)+c(cx,cy+1.4,1.4,P.mustard);
+    return s; },
+
+  columbine(){ let s=gnd()+rr(48.5,50,3,40,P.green,2)
+    + pa('M40,64 q-8,4 -10,12 q10,-2 12,-6 Z',P.green)+pa('M60,64 q8,4 10,12 q-10,-2 -12,-6 Z',P.greenDk);
+    for(let a=0;a<360;a+=72) s+=G(`translate(50,38) rotate(${a})`, pa('M0,0 C5,-6 5,-15 0,-18 C-5,-15 -5,-6 0,0 Z',P.red));
+    return s+c(50,38,6,P.mustardLt)+c(50,38,2.6,P.ochre); },
+
+  jasmine(){ let s=gnd()+ln('M22,86 C 30,58 46,50 44,26',P.green,4)+ln('M44,40 C 58,44 70,40 78,30',P.green,4);
+    s += leaf(34,58,8,4,20,P.greenDk)+leaf(58,42,8,4,60,P.green)+leaf(30,74,7,3.5,10,P.green);
+    return s+star5(44,24,7,3.4,P.white)+star5(70,30,6,3,P.white)+star5(56,52,5.5,2.8,P.white); },
+
+  // Bindweed: face-on funnel + a side-view funnel
+  bindweed(){ let s=funnelBloom(P.pink,P.rose,P.roseLt);
+    s += ln('M46,44 C 40,40 38,34 40,30',P.green,2.6)
+      + G('translate(38,28) rotate(-24)', pa('M0,0 L-8,-13 A13,13 0 0 1 8,-13 Z',P.pink)
+        + pl('-8,-13 -4,-16 0,-13 4,-16 8,-13 6,-15 2,-13 -2,-15 -6,-13 Z',P.pinkLt)+c(0,-3,2.4,P.roseLt)); return s; },
+
+  morningglory(){ return funnelBloom(P.white,P.mustardLt,P.rose); },
+
+  // Datura: side trumpet + spiky pod + a face-on open moonflower
+  datura(){ let s=gnd()+leaf(30,62,14,9,-26,P.green,P.greenDk)+leaf(70,66,11,7,32,P.greenDk);
+    s += G('translate(38,50) rotate(-20)', pa('M-4,20 C -11,5 -15,-7 -13,-16 C -5,-11 5,-11 13,-16 C 15,-7 10,5 4,20 Z',P.white)+e(0,9,4,8,'rgba(230,169,43,.3)'));
+    s += c(38,78,6.5,P.green); for(let a=0;a<360;a+=36) s+=G(`translate(38,78) rotate(${a})`, pl('-1.5,-6.5 1.5,-6.5 0,-10',P.greenDk));
+    const cx=62,cy=34;                                       // face-on open bloom
+    s += c(cx,cy,11,P.white);
+    for(let a=0;a<360;a+=72) s+= pl(`${cx+11*Math.cos(rad(a-90))},${cy+11*Math.sin(rad(a-90))} ${cx+15*Math.cos(rad(a-82))},${cy+15*Math.sin(rad(a-82))} ${cx+15*Math.cos(rad(a-98))},${cy+15*Math.sin(rad(a-98))}`,P.white);
+    s += c(cx,cy,4,'rgba(230,169,43,.32)')+c(cx,cy,1.8,P.mustardLt); return s; },
+
+  // Johnson grass: arching blades + branchy panicle (offshoots shrink upward)
+  grass(){ let s=gnd();
+    [[-30,-38],[-16,-50],[0,-56],[16,-50],[30,-38]].forEach(([dx,dy])=> s+=ln(`M50,86 Q ${50+dx*0.4},60 ${50+dx},${86+dy}`, dx<0?P.green:P.greenDk,4));
+    s += ln('M50,86 L50,16',P.green,2.4);
+    for(let i=0;i<7;i++){ const y=52-i*5, L=13-i*1.5;
+      s += ln(`M50,${y} q ${-L*0.5},-3 ${-L},-2`,P.straw||P.goldLt,1.7)+ln(`M50,${y} q ${L*0.5},-3 ${L},-2`,P.straw||P.goldLt,1.7)
+         + c(50-L,y-2,1.4,P.goldLt)+c(50+L,y-2,1.4,P.goldLt); }
+    return s+e(50,14,2.4,4,P.goldLt); },
+
+  seaoats(){ let s=gnd();
+    [[-22,26],[0,20],[20,28]].forEach(([dx,ty])=>{ s+=ln(`M50,84 Q ${50+dx*0.5},50 ${50+dx},${ty}`,P.green,4);
+      for(let k=0;k<4;k++) s+=G(`translate(${50+dx},${ty+6+k*7}) rotate(${dx<0?-25:25})`, pl('-6,0 6,0 3,7 -3,7',k%2?P.goldLt:P.sage)); });
+    return s; },
+
+  // Spurge: several branches radiating from a central point
+  spurge(){ let s=gnd()+ln('M50,86 L50,56',P.green,3);
+    [-52,-28,0,28,52].forEach(r=> s+= G(`translate(50,56) rotate(${r})`, ln('M0,0 L0,-22',P.green,2.6)+leaf(-4,-19,5,2.6,-25,P.green)+leaf(4,-19,5,2.6,25,P.greenDk)+c(0,-24,2,P.cream)));
+    return s+leaf(44,54,5,2.6,-30,P.green)+leaf(56,54,5,2.6,30,P.green); },
+
+  turkscap(){ let s=gnd()+rr(48.5,52,3,38,P.green,2)
+    + pa('M40,58 C28,54 26,42 36,40 C40,50 46,52 44,60 Z',P.green)+pa('M60,58 C72,54 74,42 64,40 C60,50 54,52 56,60 Z',P.greenDk);
+    s += pa('M50,46 C40,44 40,30 50,26 C56,30 56,42 50,46 Z',P.red)+pa('M50,44 C45,42 45,32 50,29 C53,33 53,41 50,44 Z',P.redDk)
+      + ln('M50,27 L50,18',P.mustard,2.4)+c(50,17,2.4,P.mustardLt); return s; },
+
+  pigeonberry(){ let s=gnd()+c(50,64,14,P.green)+c(37,68,9,P.greenDk)+c(63,68,9,P.green);
+    for(let i=0;i<4;i++) s+=e(50,52-i*5,4.4-i*0.2,3.8,P.pinkLt); return s+berries(42,66,P.red,4)+berries(60,66,P.red,4); },
+
+  // Esperanza / yellow bells
+  yellowbells(){ let s=gnd()+ln('M50,88 L50,50',P.green,3)+ln('M50,64 L38,52',P.green,2.6)+ln('M50,60 L62,50',P.green,2.6);
+    s += leaf(36,58,7,3,-40,P.green)+leaf(64,56,7,3,40,P.greenDk)+leaf(50,70,6,3,0,P.green);
+    const bell=(cx,cy)=> pl(`${cx-4},${cy+5} ${cx+4},${cy+5} ${cx+3},${cy-4} ${cx-3},${cy-4}`,P.mustardLt)+e(cx,cy-4,3.4,2,P.mustard)+e(cx,cy+5,3.2,1.4,P.gold);
+    return s+bell(43,40)+bell(57,40)+bell(50,31); },
+
+  // Daisy / coneflower (echinacea-style)
+  daisy(){ let s=gnd()+rr(48.5,52,3,40,P.green,2)+leaf(40,66,7,3,-30,P.green)+leaf(60,66,7,3,30,P.greenDk);
+    for(let a=0;a<360;a+=36) s+= G(`translate(50,40) rotate(${a})`, e(0,-11,3.2,6,P.purpleLt));
+    return s+c(50,40,6,P.ochre)+c(50,40,3.4,P.terraDk); },
+
+  // Red yucca (Hesperaloe): grassy fan + tall coral flower spike
+  redyucca(){ let s=gnd();
+    [-40,-22,-8,8,22,40].forEach(r=> s+= G(`translate(50,84) rotate(${r})`, pl('-2,0 -1,-38 0,-44 1,-38 2,0',P.agave)));
+    s += ln('M50,84 C 62,60 66,44 64,24',P.green,2.4);
+    for(let i=0;i<6;i++) s+= c(64-i*0.4, 24+i*6, 2.6, i%2?P.terra:P.red); return s; },
+
+  bush(){ return gnd()+c(50,56,18,P.green)+c(35,60,12,P.greenDk)+c(65,60,12,P.greenLt)+c(50,46,14,P.green); }
+};
+
+function spriteSVG(form, cls){
+  const fn = FORMS[form] || FORMS.bush;
+  return `<svg class="${cls||'sprite'}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${fn()}</svg>`;
+}
+const SPRITE_FORMS = Object.keys(FORMS);
+
+/* ============================================================
+   PLANT DATA — Jonestown, TX (zone 8b)
+   photos: Wikimedia Commons filenames (loaded via Special:FilePath)
+   ============================================================ */
+const PLANTS = [
+  { id:'turkscap', form:'turkscap', name:"Turk's Cap", latin:'Malvaviscus arboreus', confidence:'sure',
+    type:'Native shade shrub', sun:'Part Shade', water:'Low', septic:'safe',
+    roots:'Fibrous, well-behaved', hardyText:'Root-hardy to ~0°F', dieback:30, native:true, toxic:false,
+    note:"Your shade superstar. Loves the dark north side, feeds hummingbirds, and dies back to the ground in a freeze then bounces right back. Basically un-killable.",
+    vibe:"I'm easy — put me in the shade and forget about me!" },
+
+  { id:'mexicanhat', form:'mexicanhat', name:'Mexican Hat', latin:'Ratibida columnifera', confidence:'sure',
+    type:'Native wildflower', sun:'Full Sun', water:'Low', septic:'safe',
+    roots:'Shallow taproot, tidy', hardyText:'Fully hardy', dieback:28, native:true, toxic:false,
+    photos:['Prairie Coneflower (Ratibida columnifera).jpg'],
+    note:"A cheerful Texas wildflower that reseeds itself. Totally fine over the septic field. Let the seed heads dry out and it'll come back thicker next year.",
+    vibe:"Sun on my petals = happy me." },
+
+  { id:'salvia', form:'salvia', name:'Mealy Blue Sage', latin:'Salvia farinacea', confidence:'sure',
+    type:'Native perennial', sun:'Full Sun', water:'Low', septic:'safe',
+    roots:'Fibrous clump', hardyText:'Hardy to ~10°F', dieback:25, native:true, toxic:false,
+    photos:['Salvia farinacea Victoria Blue 10zz.jpg'],
+    note:"Drought-tough native salvia the bees adore. Shear it back after blooming for a second flush. Dies to the ground in a hard freeze, roots are fine.",
+    vibe:"Purple spikes, zero fuss." },
+
+  { id:'lantana', form:'lantana', name:'Trailing Lantana', latin:'Lantana montevidensis', confidence:'sure',
+    type:'Trailing flowering shrub', sun:'Full Sun', water:'Low', septic:'safe',
+    roots:'Woody, non-invasive', hardyText:'Root-hardy to ~20°F', cover:28, dieback:30, native:false, toxic:false,
+    photos:['Lantana montevidensis 01.JPG','Lantana montevidensis.JPG'],
+    note:"A low, spreading lantana that spills over edges and blooms nonstop through the heat for the butterflies. It melts in a freeze but the roots overwinter here; a cover on a hard-freeze night saves more of the top.",
+    vibe:"The hotter it gets, the more I bloom." },
+
+  { id:'dayflower', form:'dayflower', name:'Dayflower', latin:'Commelina erecta', confidence:'sure',
+    type:'Native groundcover', sun:'Sun / Part Shade', water:'Low', septic:'safe',
+    roots:'Shallow, spreads a bit', hardyText:'Root-hardy', dieback:30, native:true, toxic:false,
+    photos:['Trapoeraba (Commelina Erecta).jpg'],
+    note:"Those little blue flowers open in the morning and close by afternoon. Spreads gently — pull it where you don't want it, otherwise a nice free groundcover.",
+    vibe:"Blue in the morning, gone by lunch!" },
+
+  { id:'rose', form:'rose', name:'Knock Out Rose', latin:"Rosa 'Knock Out'", confidence:'sure',
+    type:'Shrub rose', sun:'Full Sun', water:'Medium', septic:'safe',
+    roots:'Moderate, non-aggressive', hardyText:'Very hardy (zone 4)', dieback:15, native:false, toxic:false,
+    photos:["Rosa 'Knockout' 8601.JPG"],
+    note:"A bulletproof, repeat-blooming landscape rose. Give it a haircut in late winter and it blooms spring to frost. Handles our freezes without any help.",
+    vibe:"Prune me once a year, I'll bloom all summer." },
+
+  { id:'pomegranate', form:'pomegranate', name:'Pomegranate', latin:'Punica granatum', confidence:'guess',
+    type:'Fruiting shrub', sun:'Full Sun', water:'Medium', septic:'safe',
+    roots:'Non-aggressive (give ~8 ft)', hardyText:'Hardy to ~10°F', cover:12, dieback:15, native:false, toxic:false,
+    photos:['Punica granatum flower.jpg','Pomegranate flowers(23).JPG'],
+    note:"Deciduous, so it naturally drops leaves for winter — bare branches are normal, not dead. Mature plants shrug off our freezes; wrap a very young one on a single-digit night.",
+    vibe:"Don't panic when I go bare — that's just winter." },
+
+  { id:'jasmine', form:'jasmine', name:'Confederate Jasmine', latin:'Trachelospermum jasminoides', confidence:'guess',
+    type:'Evergreen vine', sun:'Sun / Part Shade', water:'Medium', septic:'safe',
+    roots:'Non-aggressive climber', hardyText:'Tender edge of zone 8b', cover:28, dieback:20, native:false, toxic:false,
+    photos:['Trachelospermum jasminoides flowers.jpg'],
+    note:"The climber trained up the fence stake. Smells amazing in spring. It's the most freeze-sensitive of your in-ground plants — throw a frost cloth over it when a hard freeze is coming.",
+    vibe:"Cover me on cold nights and I'll perfume your spring." },
+
+  { id:'pricklypear', form:'cactus', name:'Prickly Pear', latin:'Opuntia', confidence:'sure',
+    type:'Native cactus', sun:'Full Sun', water:'Low', septic:'safe',
+    roots:'Shallow & wide, gentle', hardyText:'Hardy to ~5°F', native:true, toxic:false,
+    photos:['Opuntia phaeacantha-- the Tulip Prickly Pear (26962055752).jpg'],
+    note:"A true Texas native — thrives on neglect and full blazing sun. Shallow roots mean it's perfectly happy over the septic field. Watch for tiny glochid spines when weeding nearby.",
+    vibe:"Water? Never heard of her." },
+
+  { id:'agave', form:'agave', name:'Agave', latin:'Agave americana', confidence:'guess',
+    type:'Architectural succulent', sun:'Full Sun', water:'Low', septic:'safe',
+    roots:'Shallow, non-invasive', hardyText:'Hardy to ~15°F', cover:18, native:false, toxic:true,
+    photos:['Agave americana.jpg'],
+    note:"Big sculptural rosette. Mostly freeze-proof here, but a prolonged hard freeze can spot the leaves — cover on a sub-20°F night if you want it pristine. Sap is a skin irritant.",
+    vibe:"I'm the tough guy of the yard." },
+
+  { id:'ligustrum', form:'ligustrum', name:'Sunshine Ligustrum', latin:'Ligustrum sinense "Sunshine"', confidence:'guess',
+    type:'Golden evergreen shrub', sun:'Full Sun', water:'Low', septic:'caution',
+    roots:'Moderate — keep off the field', hardyText:'Hardy to ~5°F', native:false, toxic:false,
+    note:"That glowing chartreuse shrub. This sterile variety won't seed around, but privet roots can be pushy — I'd keep it a few feet clear of septic lines to be safe. Evergreen and freeze-proof.",
+    vibe:"I glow gold all year — just keep me off the pipes." },
+
+  { id:'grass', form:'grass', name:'Johnson Grass', latin:'Sorghum halepense', confidence:'sure',
+    type:'Invasive grass', sun:'Full Sun', water:'Low', septic:'caution',
+    roots:'Aggressive spreading rhizomes', hardyText:'Fully hardy', dieback:32, native:false, toxic:false, weed:true,
+    note:"Turns out this is Johnson grass — a fast, invasive spreader that runs by underground rhizomes and reseeds heavily. It's not a keeper: I'd cut the seed heads before they ripen and dig it out, especially anywhere near the septic field.",
+    vibe:"I spread fast — you may want me gone." },
+
+  { id:'datura', form:'datura', name:'Datura (Jimsonweed)', latin:'Datura wrightii', confidence:'sure',
+    type:'Native perennial', sun:'Full Sun', water:'Low', septic:'safe',
+    roots:'Taproot, non-aggressive', hardyText:'Root-hardy, dies back', dieback:32, native:true, toxic:true,
+    photos:['Datura wrightii flower.jpg','Sacred datura (Datura wrightii) (14212557338).jpg'],
+    note:"Gorgeous white moonflower trumpets and spiky seed pods — but every part is toxic if eaten. Keep it away from pets/kids and wash up after handling. It dies down and returns from the root each year.",
+    vibe:"Pretty but poisonous — look, don't taste!" },
+
+  { id:'bindweed', form:'bindweed', name:'Field Bindweed', latin:'Convolvulus arvensis', confidence:'guess',
+    type:'Weedy vine', sun:'Full Sun', water:'Low', septic:'avoid',
+    roots:'Deep, aggressive taproot', hardyText:'Hardy weed', native:false, toxic:false, weed:true,
+    note:"Those little pink trumpets are pretty, but this is an aggressive vine with roots that can run several feet deep. I'd pull it — especially anywhere near the septic field, where you don't want deep roots.",
+    vibe:"Cute flower, troublemaker roots. Evict me!" },
+
+  { id:'morningglory', form:'morningglory', name:'White Morning Glory', latin:'Ipomoea lacunosa', confidence:'guess',
+    type:'Annual vine', sun:'Sun / Part Shade', water:'Low', septic:'safe',
+    roots:'Shallow annual roots', hardyText:'Annual — reseeds', native:true, toxic:false, weed:true,
+    note:"A dainty white morning glory with a magenta throat. It's an annual volunteer — harmless and shallow-rooted. Pull it off anything you don't want it climbing.",
+    vibe:"I just show up and say hi each summer." },
+
+  { id:'spurge', form:'spurge', name:'Spurge', latin:'Euphorbia (toothed spurge)', confidence:'guess',
+    type:'Volunteer weed', sun:'Sun / Part Shade', water:'Low', septic:'safe',
+    roots:'Shallow annual roots', hardyText:'Annual weed', native:true, toxic:true, weed:true,
+    note:"A common sprawling volunteer. Shallow-rooted and easy to pull. The milky sap can irritate skin, so wear gloves if you're yanking a lot of it.",
+    vibe:"Easy to pull if I overstay my welcome." },
+
+  { id:'firestick', form:'firestick', name:'Firestick (Pencil Cactus)', latin:'Euphorbia tirucalli', confidence:'sure',
+    type:'Potted succulent', sun:'Full Sun', water:'Low', septic:'potted',
+    roots:'Potted', hardyText:'TENDER — protect below 32°F', bringIn:35, native:false, toxic:true,
+    photos:["Euphorbia tirucalli 'Sticks on Fire' Plant 3264px.jpg"],
+    note:"This one is NOT freeze-hardy — bring the pot indoors any time temps drop toward freezing. Milky sap is nasty (skin + eyes), so handle with gloves. Loves to bake in full sun otherwise.",
+    vibe:"Bring me in when it's cold — I'm a wimp about frost!" },
+
+  { id:'snake', form:'snake', name:'Snake Plant', latin:'Dracaena trifasciata', confidence:'sure',
+    type:'Potted houseplant', sun:'Shade', water:'Low', septic:'potted',
+    roots:'Potted', hardyText:'Tender — bring in below 45°F', bringIn:45, native:false, toxic:true,
+    note:"Nearly indestructible indoors and takes low light like a champ. It hates the cold, though — bring it in well before the first cool nights. Water only when bone dry.",
+    vibe:"Low light, low water, low drama." },
+
+  { id:'dragon', form:'dragon', name:'Red Dragon Flower', latin:'Huernia schneideriana', confidence:'sure',
+    type:'Potted succulent', sun:'Sun / Part Shade', water:'Low', septic:'potted',
+    roots:'Potted', hardyText:'Tender — bring in below 40°F', bringIn:40, native:false, toxic:false,
+    photos:['Huernia schneideriana (Family Apocynaceae) - flower.jpg'],
+    note:"A clumping succulent with slim, toothed, tubular stems and small deep-red star flowers near the base. Loves bright light and dry soil; bring it indoors before a freeze like the other tender succulents.",
+    vibe:"Little red dragons at my feet!" },
+];
+
+/* More to Grow — suggestions Clark doesn't have yet, grouped by light */
+const MORE_TO_GROW = [
+  { light:'Full Sun', icon:'sunny', label:'For full-sun spots', picks:[
+    { form:'yellowbells', name:'Esperanza', latin:'Tecoma stans', why:'Big clusters of yellow trumpet flowers all summer. Heat-loving, drought-tough, and a hummingbird magnet.' },
+    { form:'cedarsage', name:'Autumn Sage', latin:'Salvia greggii', why:'Nonstop red/pink blooms on a tidy shrub. Thrives on neglect and full sun; shear it back once or twice a year.' },
+    { form:'daisy', name:'Purple Coneflower', latin:'Echinacea purpurea', why:'Classic prairie daisy with big pink-purple petals. Pollinator favorite; leave seed heads for the birds.' },
+    { form:'redyucca', name:'Red Yucca', latin:'Hesperaloe parviflora', why:'Grassy evergreen clump that throws tall coral flower spikes for months. Nearly zero water once established.' },
+    { form:'salvia', name:"Gregg's Mistflower", latin:'Conoclinium greggii', why:'Fuzzy blue flowers that butterflies (especially Queens) swarm. Spreads into a soft low drift.' },
+  ]},
+  { light:'Shade', icon:'cloud', label:'For shady spots (north side)', picks:[
+    { form:'turkscap', name:"Turk's Cap", latin:'Malvaviscus arboreus', why:"Red hummingbird flowers in dry shade — the gold standard for a shady Texas bed. (You already have one!)" },
+    { form:'cedarsage', name:'Cedar Sage', latin:'Salvia roemeriana', why:'Scarlet blooms that thrive in the dappled shade under trees; needs almost no watering.' },
+    { form:'skullcap', name:'Heartleaf Skullcap', latin:'Scutellaria ovata', why:'Silvery leaves and lavender spikes that carpet shade, then go dormant in the worst summer heat.' },
+    { form:'pigeonberry', name:'Pigeonberry', latin:'Rivina humilis', why:'Pink flowers AND red berries at once in full shade. Tidy, low, and very drought-tough.' },
+    { form:'beautyberry', name:'American Beautyberry', latin:'Callicarpa americana', why:'Arching shrub with electric-purple berry clusters in fall. Loves shade, hates fuss.' },
+    { form:'seaoats', name:'Inland Sea Oats', latin:'Chasmanthium latifolium', why:'Bamboo-like grass with dangly oat seed heads — one of the few grasses that loves deep shade.' },
+    { form:'coralberry', name:'Coralberry', latin:'Symphoricarpos orbiculatus', why:'Low, spreading, and covered in coral berries. Fills a shady bank with zero irrigation.' },
+    { form:'columbine', name:'Columbine', latin:'Aquilegia canadensis', why:'Delicate yellow-red lanterns in spring shade. Reseeds gently for more color each year.' },
+  ]},
+];
+
+/* Sprite picker for Add-a-plant (auto-selected by name, or chosen manually) */
+const SPRITE_CHOICES = [
+  { group:'Flowers', forms:[['rose','Rose bloom'],['daisy','Daisy / coneflower'],['mexicanhat','Mexican-hat cone'],['salvia','Purple spike'],
+    ['cedarsage','Red spike'],['yellowbells','Yellow bells'],['columbine','Star flower'],['dayflower','Blue flower'],['lantana','Flower cluster'],
+    ['skullcap','Groundcover + spike'],['turkscap','Furled red flower'],['bindweed','Pink funnel'],['morningglory','White funnel']] },
+  { group:'Foliage & shrubs', forms:[['bush','Round shrub'],['ligustrum','Gold shrub'],['beautyberry','Berry shrub (purple)'],
+    ['coralberry','Berry shrub (coral)'],['pigeonberry','Low berry plant'],['spurge','Leafy sprig']] },
+  { group:'Succulents & cactus', forms:[['cactus','Prickly pear'],['agave','Agave rosette'],['redyucca','Red yucca'],
+    ['dragon','Dragon flower (tubular)'],['snake','Snake plant'],['firestick','Pencil/stick plant']] },
+  { group:'Grasses & vines', forms:[['grass','Grass panicle'],['seaoats','Arching grass'],['jasmine','Flowering vine'],['datura','Trumpet + pod']] },
+  { group:'Fruit', forms:[['pomegranate','Round fruit']] },
+];
+
+/* Name-keyword → sprite form (auto-pick illustration when adding) */
+const FORM_KEYWORDS = [
+  ['prickly pear','cactus'],['opuntia','cactus'],['cactus','cactus'],['agave','agave'],['yucca','redyucca'],['red yucca','redyucca'],
+  ['hesperaloe','redyucca'],['snake plant','snake'],['sansevieria','snake'],['dracaena','snake'],['dragon','dragon'],['huernia','dragon'],
+  ['stapelia','dragon'],['firestick','firestick'],['pencil','firestick'],['euphorbia tirucalli','firestick'],['aloe','agave'],['succulent','dragon'],
+  ['rose','rose'],['esperanza','yellowbells'],['tecoma','yellowbells'],['yellow bell','yellowbells'],['bells of fire','yellowbells'],
+  ['coneflower','daisy'],['echinacea','daisy'],['daisy','daisy'],['black-eyed','daisy'],['blackfoot','daisy'],['zinnia','daisy'],['sunflower','daisy'],
+  ['mexican hat','mexicanhat'],['ratibida','mexicanhat'],['autumn sage','cedarsage'],['salvia greggii','cedarsage'],['cedar sage','cedarsage'],
+  ['sage','salvia'],['salvia','salvia'],['mistflower','salvia'],['lavender','salvia'],['rosemary','salvia'],['russian sage','salvia'],
+  ['lantana','lantana'],['turk','turkscap'],['malvaviscus','turkscap'],['columbine','columbine'],['aquilegia','columbine'],
+  ['beautyberry','beautyberry'],['callicarpa','beautyberry'],['coralberry','coralberry'],['symphoricarpos','coralberry'],
+  ['pigeonberry','pigeonberry'],['rivina','pigeonberry'],['skullcap','skullcap'],['scutellaria','skullcap'],['dayflower','dayflower'],['commelina','dayflower'],
+  ['jasmine','jasmine'],['trachelospermum','jasmine'],['morning glory','morningglory'],['ipomoea','morningglory'],['bindweed','bindweed'],['convolvulus','bindweed'],
+  ['datura','datura'],['jimson','datura'],['moonflower','datura'],['pomegranate','pomegranate'],['punica','pomegranate'],
+  ['sea oats','seaoats'],['chasmanthium','seaoats'],['muhly','grass'],['grass','grass'],['sorghum','grass'],['spurge','spurge'],['euphorbia','spurge'],
+  ['ligustrum','ligustrum'],['privet','ligustrum'],['boxwood','bush'],['holly','bush'],['shrub','bush'],['barberry','coralberry'],
+];
+
+/* Small library so Add-a-plant can smart-fill stats from a typed name (Central-TX focused) */
+const KNOWN_PLANTS = [
+  { match:['esperanza','tecoma','yellow bell'], data:{ latin:'Tecoma stans', type:'Flowering shrub', sun:'Full Sun', water:'Low', septic:'safe', roots:'Non-aggressive', cold:'dieback', native:true, toxic:false, vibe:'I love the heat!' } },
+  { match:['autumn sage','salvia greggii','cedar sage'], data:{ latin:'Salvia greggii', type:'Native perennial', sun:'Full Sun', water:'Low', septic:'safe', roots:'Fibrous clump', cold:'dieback', native:true, toxic:false } },
+  { match:['salvia','sage','mistflower'], data:{ type:'Perennial', sun:'Full Sun', water:'Low', septic:'safe', roots:'Fibrous clump', cold:'dieback', native:true, toxic:false } },
+  { match:['rose','knock out','knockout'], data:{ latin:'Rosa', type:'Shrub rose', sun:'Full Sun', water:'Medium', septic:'safe', roots:'Moderate', cold:'hardy', native:false, toxic:false } },
+  { match:['lantana'], data:{ latin:'Lantana', type:'Flowering shrub', sun:'Full Sun', water:'Low', septic:'safe', roots:'Woody, non-invasive', cold:'dieback', native:false, toxic:false } },
+  { match:['agave'], data:{ latin:'Agave', type:'Architectural succulent', sun:'Full Sun', water:'Low', septic:'safe', roots:'Shallow', cold:'cover', native:false, toxic:true } },
+  { match:['prickly pear','opuntia','cactus'], data:{ latin:'Opuntia', type:'Cactus', sun:'Full Sun', water:'Low', septic:'safe', roots:'Shallow & wide', cold:'hardy', native:true, toxic:false } },
+  { match:['red yucca','hesperaloe'], data:{ latin:'Hesperaloe parviflora', type:'Evergreen succulent', sun:'Full Sun', water:'Low', septic:'safe', roots:'Fibrous', cold:'hardy', native:true, toxic:false } },
+  { match:['coneflower','echinacea'], data:{ latin:'Echinacea purpurea', type:'Perennial wildflower', sun:'Full Sun', water:'Low', septic:'safe', roots:'Taproot', cold:'dieback', native:true, toxic:false } },
+  { match:['turk','malvaviscus'], data:{ latin:'Malvaviscus arboreus', type:'Native shade shrub', sun:'Part Shade', water:'Low', septic:'safe', roots:'Fibrous', cold:'dieback', native:true, toxic:false } },
+  { match:['jasmine','trachelospermum'], data:{ latin:'Trachelospermum jasminoides', type:'Evergreen vine', sun:'Sun / Part Shade', water:'Medium', septic:'safe', roots:'Non-aggressive climber', cold:'cover', native:false, toxic:false } },
+  { match:['pomegranate','punica'], data:{ latin:'Punica granatum', type:'Fruiting shrub', sun:'Full Sun', water:'Medium', septic:'safe', roots:'Non-aggressive', cold:'hardy', native:false, toxic:false } },
+  { match:['snake plant','sansevieria','dracaena'], data:{ latin:'Dracaena trifasciata', type:'Potted houseplant', sun:'Shade', water:'Low', septic:'potted', roots:'Potted', cold:'tender', native:false, toxic:true } },
+  { match:['firestick','pencil','tirucalli'], data:{ latin:'Euphorbia tirucalli', type:'Potted succulent', sun:'Full Sun', water:'Low', septic:'potted', roots:'Potted', cold:'tender', native:false, toxic:true } },
+  { match:['dragon','huernia','stapelia'], data:{ latin:'Huernia', type:'Potted succulent', sun:'Sun / Part Shade', water:'Low', septic:'potted', roots:'Potted', cold:'tender', native:false, toxic:false } },
+  { match:['succulent'], data:{ type:'Succulent', sun:'Full Sun', water:'Low', septic:'potted', roots:'Potted', cold:'tender', native:false, toxic:false } },
+  { match:['beautyberry','callicarpa'], data:{ latin:'Callicarpa americana', type:'Native shrub', sun:'Part Shade', water:'Low', septic:'safe', roots:'Fibrous', cold:'dieback', native:true, toxic:false } },
+  { match:['ligustrum','privet'], data:{ latin:'Ligustrum', type:'Evergreen shrub', sun:'Full Sun', water:'Low', septic:'caution', roots:'Moderate', cold:'hardy', native:false, toxic:false } },
+  { match:['muhly','grass'], data:{ type:'Ornamental grass', sun:'Full Sun', water:'Low', septic:'caution', roots:'Clumping', cold:'dieback', native:true, toxic:false } },
+];
+
+/* ============================================================
+   Plant Pals — app logic
+   ============================================================ */
+const LAT = 30.4949, LON = -97.9256, PLACE = 'Jonestown, TX';
+
+/* Authentic Google Material (Filled) icon path data, inlined — no font dependency */
+const ICONS = {
+  wb_sunny:'M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z',
+  contrast:'M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10zm1-17.93c3.94.49 7 3.85 7 7.93s-3.06 7.44-7 7.93V4.07z',
+  cloud:'M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z',
+  water_drop:'M12 2c-5.33 4.55-8 8.48-8 11.8C4 17.84 7.16 21 12 21s8-3.16 8-7.2c0-3.32-2.67-7.25-8-11.8z',
+  ac_unit:'M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z',
+  whatshot:'M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z',
+  flash_on:'M7 2v11h3v9l7-12h-4l4-8z',
+  location_on:'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+  check_circle:'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
+  error:'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z',
+  cancel:'M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z',
+  warning:'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
+  account_tree:'M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3z',
+  home:'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z',
+  eco:'M6.05 8.05c-2.73 2.73-2.73 7.15-.02 9.88 1.47-3.4 4.09-6.24 7.36-7.93-2.77 2.34-4.71 5.61-5.39 9.32 2.6 1.23 5.8.78 7.95-1.37C19.43 14.47 20 4 20 4S9.53 4.57 6.05 8.05z',
+  add:'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z',
+  add_circle:'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z',
+  close:'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
+  check:'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
+  arrow_back:'M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z',
+  delete:'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z',
+  lock:'M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z',
+  auto_awesome:'M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25zM11.5 9.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12z',
+  help:'M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z',
+  cloud_off:'M24 15c0-2.64-2.05-4.78-4.65-4.96C18.67 6.59 15.64 4 12 4c-1.33 0-2.57.36-3.65.97l1.49 1.49C10.51 6.17 11.23 6 12 6c3.04 0 5.5 2.46 5.5 5.5v.5H19c1.66 0 3 1.34 3 3 0 1.13-.64 2.11-1.56 2.62l1.45 1.45C23.16 18.16 24 16.68 24 15zM4.41 3.86L3 5.27l2.77 2.77h-.42C2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h11.73l2 2 1.41-1.41L4.41 3.86z',
+  local_florist:'M12 22c4.97 0 9-4.03 9-9-4.97 0-9 4.03-9 9zM5.6 10.25c0 1.38 1.12 2.5 2.5 2.5.53 0 1.01-.16 1.42-.44l-.02.19c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5l-.02-.19c.4.28.89.44 1.42.44 1.38 0 2.5-1.12 2.5-2.5 0-1-.59-1.85-1.43-2.25.84-.4 1.43-1.25 1.43-2.25 0-1.38-1.12-2.5-2.5-2.5-.53 0-1.01.16-1.42.44l.02-.19C14.5 2.12 13.38 1 12 1S9.5 2.12 9.5 3.5l.02.19c-.4-.28-.89-.44-1.42-.44-1.38 0-2.5 1.12-2.5 2.5 0 1 .59 1.85 1.43 2.25-.84.4-1.43 1.25-1.43 2.25zM12 5.5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5S9.5 9.38 9.5 8 10.62 5.5 12 5.5z',
+  zoom_in:'M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2z',
+  umbrella:'M13.127 14.56l1.43-1.43 6.44 6.443L19.57 21zm4.293-5.73l2.86-2.86c-3.95-3.95-10.35-3.96-14.3-.02 3.93-1.3 8.31-.25 11.44 2.88zM5.95 5.98c-3.94 3.95-3.93 10.35.02 14.3l2.86-2.86C5.7 14.29 4.65 9.91 5.95 5.98zm.02-.02l-.01.01c-.38 3.01 1.17 6.88 4.3 10.02l5.73-5.73c-3.13-3.13-7.01-4.68-10.02-4.3z',
+  pest_control:'M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C12.96 5.06 12.49 5 12 5c-.49 0-.96.06-1.41.17L8.41 3 7 4.41l1.62 1.63C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z',
+  photo:'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'
+};
+const ms = n => `<svg class="ms" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="${ICONS[n]||''}"/></svg>`;
+const $  = (s,el=document)=>el.querySelector(s);
+const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+const COMMONS = f => 'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(f).replace(/%2F/g,'/');
+
+const WMO = {0:['Clear','wb_sunny'],1:['Mostly clear','wb_sunny'],2:['Partly cloudy','cloud'],3:['Cloudy','cloud'],
+ 45:['Foggy','cloud'],48:['Foggy','cloud'],51:['Drizzle','water_drop'],53:['Drizzle','water_drop'],55:['Drizzle','water_drop'],
+ 61:['Rain','water_drop'],63:['Rain','water_drop'],65:['Heavy rain','water_drop'],66:['Freezing rain','ac_unit'],67:['Freezing rain','ac_unit'],
+ 71:['Snow','ac_unit'],73:['Snow','ac_unit'],75:['Snow','ac_unit'],80:['Showers','water_drop'],81:['Showers','water_drop'],82:['Downpour','water_drop'],
+ 95:['Storms','flash_on'],96:['Storms','flash_on'],99:['Storms','flash_on']};
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+let WX = null, activeFilter = 'all';
+const LS_C='plantpals_custom_v1', LS_D='plantpals_deleted_v1';
+const loadJSON=(k)=>{ try{ return JSON.parse(localStorage.getItem(k))||[]; }catch(e){ return []; } };
+const saveJSON=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
+let customPlants=[], deletedIds=[];
+
+/* ---------- freeze logic ---------- */
+function freezeStatus(p, minT){
+  if(minT==null) return null;
+  if(p.bringIn && minT<=p.bringIn) return {lvl:'bringin',label:'Bring inside',icon:'home',msg:'Move this pot indoors before nightfall.'};
+  if(p.cover  && minT<=p.cover)   return {lvl:'cover',label:'Cover tonight',icon:'umbrella',msg:'Drape frost cloth or a sheet over the top overnight.'};
+  if(p.dieback && minT<=p.dieback) return {lvl:'dieback',label:'Will die back',icon:'ac_unit',msg:'Fine to leave — the top may brown but the roots survive and regrow.'};
+  return {lvl:'fine',label:'Cold-hardy',icon:'check_circle',msg:'No action needed — this one handles the cold.'};
+}
+
+/* ---------- weather ---------- */
+async function loadWeather(){
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`
+    + `&current=temperature_2m,weather_code`
+    + `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,weather_code`
+    + `&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=7`;
+  try{ const r=await fetch(url); if(!r.ok) throw 0; WX=await r.json(); }catch(e){ WX=null; }
+  renderWeather(); renderAlerts(); renderGrid();
+}
+function wxSummary(){
+  if(!WX||!WX.daily) return null;
+  const d=WX.daily,N=d.time.length; let nextFreeze=null,nextRain=null,nextHeat=null;
+  for(let i=0;i<N;i++){
+    if(nextFreeze==null && d.temperature_2m_min[i]<=32) nextFreeze={i,date:d.time[i],lo:Math.round(d.temperature_2m_min[i])};
+    if(i<4 && nextRain==null && (d.precipitation_probability_max[i]>=55||d.precipitation_sum[i]>=0.1)) nextRain={i,date:d.time[i],prob:d.precipitation_probability_max[i]};
+    if(i<4 && nextHeat==null && d.temperature_2m_max[i]>=99) nextHeat={i,date:d.time[i],hi:Math.round(d.temperature_2m_max[i])};
+  }
+  return {nextFreeze,nextRain,nextHeat};
+}
+const dayName=(s,i)=> i===0?'today': i===1?'tomorrow': DOW[new Date(s+'T12:00:00').getDay()];
+
+function renderWeather(){
+  const el=$('#weather');
+  if(!WX){ el.innerHTML=`<div class="wx-offline">${ms('cloud_off')} Couldn't reach the weather service — plant care still works below. Refresh to retry.</div>`; return; }
+  const cur=WX.current,d=WX.daily,[txt,ic]=WMO[cur.weather_code]||['','wb_sunny'];
+  let strip='';
+  for(let i=0;i<d.time.length;i++){
+    const hi=Math.round(d.temperature_2m_max[i]),lo=Math.round(d.temperature_2m_min[i]),rain=d.precipitation_probability_max[i];
+    const[,di]=WMO[d.weather_code[i]]||['','wb_sunny']; const cls=lo<=32?'freeze':hi>=99?'hot':'';
+    strip+=`<div class="wx-day ${cls}"><span class="wx-dow">${i===0?'Now':DOW[new Date(d.time[i]+'T12:00:00').getDay()]}</span>
+      ${ms(cls==='freeze'?'ac_unit':cls==='hot'?'whatshot':di)}
+      <span class="wx-hilo"><b>${hi}°</b><i>${lo}°</i></span>
+      <span class="wx-rain ${rain>=55?'on':''}">${ms('water_drop')}${rain}%</span></div>`;
+  }
+  el.innerHTML=`<div class="wx-now"><div class="wx-place">${ms('location_on')} ${PLACE}</div>
+      <div class="wx-temp">${ms(ic)} ${Math.round(cur.temperature_2m)}°F</div><div class="wx-cond">${txt}</div></div>
+    <div class="wx-strip">${strip}</div>`;
+}
+function renderAlerts(){
+  const el=$('#alerts'),s=wxSummary(); if(!s){el.innerHTML='';return;}
+  let html='';
+  if(s.nextFreeze){
+    const lo=s.nextFreeze.lo,when=dayName(s.nextFreeze.date,s.nextFreeze.i);
+    const nin=PLANTS.filter(p=>{const f=freezeStatus(p,lo);return f&&f.lvl==='bringin';}).length;
+    const nc=PLANTS.filter(p=>{const f=freezeStatus(p,lo);return f&&f.lvl==='cover';}).length;
+    let bits=[]; if(nin)bits.push(`<b>${nin}</b> to bring inside`); if(nc)bits.push(`<b>${nc}</b> to cover`);
+    html+=`<div class="alert freeze">${ms('ac_unit')}<div><b>Freeze coming ${when}</b> — low around ${lo}°F. ${bits.length?bits.join(' · '):'your plants are all cold-hardy 🎉'}.
+      ${(nin||nc)?`<button class="alert-link" onclick="filterTo('attention')">Show me which ones</button>`:''}</div></div>`;
+  }
+  if(s.nextRain){const when=dayName(s.nextRain.date,s.nextRain.i);
+    html+=`<div class="alert rain">${ms('water_drop')}<div><b>Rain expected ${when}</b> — ${s.nextRain.prob}% chance. You can skip watering; hold off on the potted succulents especially.</div></div>`;}
+  if(s.nextHeat){const when=dayName(s.nextHeat.date,s.nextHeat.i);
+    html+=`<div class="alert heat">${ms('whatshot')}<div><b>Heat spell ${when}</b> — up to ${s.nextHeat.hi}°F. Give thirstier plants a deep soak and move tender pots to afternoon shade.</div></div>`;}
+  if(!html&&WX) html=`<div class="alert calm">${ms('local_florist')}<div><b>All calm in the garden.</b> No freeze, rain, or heat alerts in the next few days — go say hi to your plants!</div></div>`;
+  el.innerHTML=html;
+}
+
+/* ---------- stat helpers ---------- */
+const SUN_N={'Full Sun':3,'Sun / Part Shade':2,'Part Shade':2,'Shade':1};
+const WATER_N={'Low':1,'Medium':2,'Thirsty':3};
+const SUN_ICON={'Full Sun':'wb_sunny','Sun / Part Shade':'contrast','Part Shade':'contrast','Shade':'cloud'};
+const SEPTIC={safe:['check_circle','Septic-safe','ok'],caution:['error','Septic-caution','warn'],avoid:['cancel','Not septic-safe','bad'],potted:['local_florist','Potted','pot']};
+function meter(n,max,icon,wet){let s='';for(let i=1;i<=max;i++){const on=i<=n;s+=`<span class="pip ${on?'on'+(wet?' w':''):'off'}">${ms(icon)}</span>`;}return s;}
+function chips(p){const sp=SEPTIC[p.septic];
+  return `<span class="chip sun">${ms(SUN_ICON[p.sun]||'wb_sunny')} ${p.sun}</span><span class="chip ${sp[2]}">${ms(sp[0])} ${sp[1]}</span>`;}
+
+/* ---------- grid ---------- */
+function plantMatches(p){
+  if(activeFilter==='all')return true;
+  if(activeFilter==='ground')return p.septic!=='potted';
+  if(activeFilter==='potted')return p.septic==='potted';
+  if(activeFilter==='weeds')return p.weed;
+  if(activeFilter==='attention'){const s=wxSummary();if(!s||!s.nextFreeze)return false;const f=freezeStatus(p,s.nextFreeze.lo);return f&&(f.lvl==='bringin'||f.lvl==='cover');}
+  return true;
+}
+function renderGrid(){
+  const grid=$('#grid'),s=wxSummary(),lo=s&&s.nextFreeze?s.nextFreeze.lo:null;
+  const list=PLANTS.filter(plantMatches);
+  let html=list.map(p=>{
+    const fz=lo!=null?freezeStatus(p,lo):null; let flag='';
+    if(fz&&fz.lvl==='bringin')flag=`<span class="flag in">${ms('home')} Bring in</span>`;
+    else if(fz&&fz.lvl==='cover')flag=`<span class="flag cover">${ms('umbrella')} Cover</span>`;
+    const status=(p.toxic?`<span class="tag tox" title="Toxic / irritant">${ms('warning')}</span>`:'')
+      +(p.weed?`<span class="tag weed" title="Volunteer / weed">${ms('eco')}</span>`:'');
+    return `<button class="card" onclick="openPlant('${p.id}')">${flag}
+      <span class="card-check" title="Plant Check — diagnose a photo" onclick="event.stopPropagation();openCheck('${p.id}')">${ms('zoom_in')}</span>
+      <div class="tile">${spriteSVG(p.form)}</div>
+      <div class="card-body">
+        <div class="card-name">${p.name}</div>
+        ${status?`<div class="status-row">${status}</div>`:''}
+        <hr class="card-rule">
+        <div class="card-chips">${chips(p)}</div>
+      </div></button>`;
+  }).join('');
+  if(activeFilter==='all') html+=`<button class="card add-card" onclick="openAdd()">${ms('add_circle')}Add a plant</button>`;
+  grid.innerHTML = html || `<div class="empty">Nothing here right now 🌱</div>`;
+}
+function filterTo(f){activeFilter=f;$$('.filter').forEach(b=>b.classList.toggle('on',b.dataset.f===f));renderGrid();$('#grid').scrollIntoView({behavior:'smooth',block:'start'});}
+
+/* ---------- photo gallery ---------- */
+function galleryHTML(p){
+  const items=[];
+  if(p.photoData) items.push(`<div class="ph"><img src="${p.photoData}" alt="${p.name}" onerror="this.closest('.ph').remove()"></div>`);
+  (p.photos||[]).slice(0,3).forEach(f=> items.push(`<a class="ph" href="${COMMONS(f)}" target="_blank" rel="noopener"><img src="${COMMONS(f)}?width=520" alt="${p.name}" loading="lazy" onerror="this.closest('.ph').remove()"></a>`));
+  if(!items.length) return '';
+  return `<div class="gcap">Real photos <span>${p.photoData?'· your photo':'· via Wikimedia Commons'}</span></div><div class="gallery">${items.join('')}</div>`;
+}
+
+/* ---------- plant modal ---------- */
+function openPlant(id){
+  const p=PLANTS.find(x=>x.id===id);if(!p)return;
+  const s=wxSummary(),lo=s&&s.nextFreeze?s.nextFreeze.lo:null,fz=lo!=null?freezeStatus(p,lo):null;
+  let plan;
+  if(p.septic==='potted'&&p.bringIn){
+    plan=fz&&fz.lvl==='bringin'?`<b>Action now:</b> ${fz.msg} (freeze near ${lo}°F coming ${dayName(s.nextFreeze.date,s.nextFreeze.i)}).`
+      :`Keep an eye on the forecast — bring this pot indoors any time nights approach ${p.bringIn}°F.`;
+  } else if(fz&&(fz.lvl==='bringin'||fz.lvl==='cover')) plan=`<b>Action ${dayName(s.nextFreeze.date,s.nextFreeze.i)}:</b> ${fz.msg} (low around ${lo}°F).`;
+  else if(fz&&fz.lvl==='dieback') plan=`A freeze near ${lo}°F is coming ${dayName(s.nextFreeze.date,s.nextFreeze.i)} — ${fz.msg}`;
+  else plan=`${p.hardyText}. No freeze action needed right now.`;
+  const sp=SEPTIC[p.septic];
+  openSheet(`
+    <div class="sheet-top">
+      <div class="sheet-sprite">${spriteSVG(p.form,'sprite big')}</div>
+      <div><h2>${p.name}</h2>
+        <div class="latin">${p.latin||''}</div>
+        <div class="type-pill">${p.type}${p.native?' · TX native':''}</div>
+        <div class="head-chips">${chips(p)}</div>
+        <div class="vibe">"${p.vibe||''}"</div></div>
+    </div>
+    <div class="statcard">
+      <div class="stat"><span class="stat-k">Sun</span><span class="stat-v"><span class="meter">${meter(SUN_N[p.sun]||2,3,'wb_sunny')}</span> ${p.sun}</span></div>
+      <div class="stat"><span class="stat-k">Water</span><span class="stat-v"><span class="meter">${meter(WATER_N[p.water]||1,3,'water_drop',true)}</span> ${p.water}</span></div>
+      <div class="stat"><span class="stat-k">Roots</span><span class="stat-v">${ms('account_tree')} ${p.roots||'—'}</span></div>
+      <div class="stat"><span class="stat-k">Septic</span><span class="stat-v ${sp[2]}">${ms(sp[0])} ${sp[1]}</span></div>
+      <div class="stat"><span class="stat-k">Cold</span><span class="stat-v">${ms('ac_unit')} ${p.hardyText}</span></div>
+      ${p.toxic?`<div class="stat"><span class="stat-k">Careful</span><span class="stat-v bad">${ms('warning')} Toxic / irritant</span></div>`:''}
+    </div>
+    <div class="plan ${fz?fz.lvl:''}">${ms(p.septic==='potted'?'home':'ac_unit')}<div>${plan}</div></div>
+    <p class="note">${p.note||''}</p>
+    ${galleryHTML(p)}
+    <div class="sheet-actions" id="sheetActions">
+      <button class="btn primary" onclick="openCheck('${p.id}')">${ms('zoom_in')} Plant Check</button>
+      <button class="btn danger" onclick="confirmDelete('${p.id}')">${ms('delete')} Remove</button>
+      <button class="btn ghost" onclick="closeSheet()">Close</button>
+    </div>`);
+}
+function confirmDelete(id){
+  const p=PLANTS.find(x=>x.id===id);
+  $('#sheetActions').innerHTML=`<span style="font-weight:800;align-self:center">Remove ${p?p.name:'this plant'}?</span>
+    <button class="btn danger" onclick="deletePlant('${id}')">${ms('delete')} Yes, remove</button>
+    <button class="btn ghost" onclick="openPlant('${id}')">Cancel</button>`;
+}
+function deletePlant(id){
+  const i=PLANTS.findIndex(x=>x.id===id); const wasCustom=i>=0&&PLANTS[i].custom;
+  if(i>=0)PLANTS.splice(i,1);
+  if(wasCustom){ customPlants=customPlants.filter(x=>x.id!==id); saveJSON(LS_C,customPlants); }
+  else { if(!deletedIds.includes(id)){deletedIds.push(id);saveJSON(LS_D,deletedIds);} }
+  closeSheet(); renderGrid(); renderSeptic(); $('#count').textContent=PLANTS.length;
+}
+
+/* ---------- Plant Check ---------- */
+const DIAGNOSE_ENDPOINT = "/api/diagnose";     // Netlify Function → Claude via the Netlify AI Gateway
+const PLANTINFO_ENDPOINT = "/api/plant-info";  // AI gardener for the Add-a-plant smart fill
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Shrink a photo before sending it anywhere — phone photos are huge.
+function shrinkImage(dataURL, max, cb){
+  const img = new Image();
+  img.onload = () => {
+    const sc = Math.min(1, max / Math.max(img.width, img.height));
+    if (sc >= 1 && dataURL.length < 1500000) return cb(dataURL);
+    const w = Math.round(img.width * sc), h = Math.round(img.height * sc), cv = document.createElement('canvas');
+    cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h);
+    try { cb(cv.toDataURL('image/jpeg', 0.85)); } catch(e){ cb(dataURL); }
+  };
+  img.onerror = () => cb(dataURL);
+  img.src = dataURL;
+}
+function openCheck(id){
+  const p=PLANTS.find(x=>x.id===id);if(!p)return;
+  openSheet(`
+    <div class="sheet-top"><div class="sheet-sprite">${spriteSVG(p.form,'sprite big')}</div>
+      <div><h2>Plant Check</h2><div class="latin">${p.name}</div><div class="type-pill">${ms('zoom_in')} quick photo diagnosis</div></div></div>
+    <label class="check-drop" id="checkDrop" for="checkFile">${ms('zoom_in')}
+      <p>Take or upload a photo of this plant</p><small>Tip: fill the frame with the leaves, in good light</small></label>
+    <input id="checkFile" type="file" accept="image/*" capture="environment" style="display:none">
+    <div id="checkResult"></div>
+    <p class="disclaimer">${ms('lock')} Your photo is sent securely to our plant-doctor AI for a quick look and isn't stored anywhere. It's a friendly first-pass, not a lab diagnosis.</p>
+    <div class="sheet-actions"><button class="btn ghost" onclick="openPlant('${p.id}')">${ms('arrow_back')} Back to plant</button></div>`);
+  $('#checkFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>shrinkImage(rd.result,1024,url=>runCheck(url,p));rd.readAsDataURL(f);});
+}
+function runCheck(dataURL,p){
+  const d=$('#checkDrop'); if(d)d.style.display='none';
+  $('#checkResult').innerHTML=`<div class="check-preview"><img src="${dataURL}"><div><div class="spinner"></div><p style="font-weight:700;color:var(--ink-soft)">Looking closely…</p></div></div>`;
+  diagnose(dataURL,p).then(res=>{
+    $('#checkResult').innerHTML=`
+      <div class="check-preview"><img src="${dataURL}">
+        <div><div class="result-chip ${res.cls}">${ms(res.icon)} ${esc(res.label)}</div>
+        <div style="font-weight:600;font-size:14px;line-height:1.45">${esc(res.summary)}</div></div></div>
+      <ul class="check-tips">${res.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+      ${res.source==='offline'?`<p class="disclaimer">${ms('auto_awesome')} The AI plant doctor couldn't be reached just now, so this was a quick color check done right in your browser. Try again in a minute for the full diagnosis.</p>`:''}
+      <div class="sheet-actions"><button class="btn ghost" onclick="retakeCheck('${p.id}')">${ms('zoom_in')} Try another photo</button></div>`;
+  });
+}
+function retakeCheck(id){const d=$('#checkDrop');if(d)d.style.display='';$('#checkResult').innerHTML='';$('#checkFile').value='';$('#checkFile').click();}
+async function diagnose(dataURL,p){
+  if(DIAGNOSE_ENDPOINT){ try{ const r=await fetch(DIAGNOSE_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:dataURL,plant:p.name,profile:{sun:p.sun,water:p.water,hardy:p.hardyText}})}); if(r.ok){const j=await r.json();j.source='ai';return j;} }catch(e){} }
+  return analyzeImage(dataURL,p);
+}
+function analyzeImage(dataURL,p){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      const N=170,cv=document.createElement('canvas');cv.width=N;cv.height=N;const cx=cv.getContext('2d');cx.imageSmoothingEnabled=false;
+      const scale=Math.max(N/img.width,N/img.height),w=img.width*scale,h=img.height*scale;cx.drawImage(img,(N-w)/2,(N-h)/2,w,h);
+      let data;try{data=cx.getImageData(0,0,N,N).data;}catch(e){return resolve(offlineResult('info',p));}
+      let green=0,yellow=0,brown=0,orange=0,red=0,other=0,neutral=0,dark=0,tot=0;
+      for(let i=0;i<data.length;i+=16){
+        const r=data[i]/255,g=data[i+1]/255,b=data[i+2]/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),v=mx,s=mx===0?0:(mx-mn)/mx;tot++;
+        if(v<0.16){dark++;continue;} if(s<0.18){neutral++;continue;}
+        let hh=0;const dd=mx-mn; if(dd===0)hh=0;else if(mx===r)hh=60*(((g-b)/dd)%6);else if(mx===g)hh=60*((b-r)/dd+2);else hh=60*((r-g)/dd+4); if(hh<0)hh+=360;
+        if(hh>=70&&hh<=175&&v>0.2)green++; else if(hh>=42&&hh<70)yellow++; else if(hh>=20&&hh<42){if(v<0.5)brown++;else orange++;} else if(hh<20||hh>=335)red++; else other++;
+      }
+      const plant=green+yellow+brown+orange+red+other;
+      if(plant<tot*0.10)return resolve(offlineResult('info',p));
+      const gf=green/plant,yf=yellow/plant,bf=brown/plant,of=orange/plant,sf=dark/(green+dark+1),dry=bf+of,yellowing=yf+of*0.5;
+      let status;
+      if(sf>0.26&&green>plant*0.12)status='pest';
+      else if(gf>0.6&&dry<0.22&&yf<0.16)status='healthy';
+      else if(dry>0.34)status='thirsty';
+      else if(yellowing>0.3&&gf<0.62)status='stress';
+      else if(gf>0.5)status='healthy';
+      else status='info';
+      resolve(offlineResult(status,p));
+    };
+    img.onerror=()=>resolve(offlineResult('info',p));
+    img.src=dataURL;
+  });
+}
+function offlineResult(status,p){
+  const low=p.water==='Low';
+  const R={
+    healthy:{label:'Looks healthy',icon:'check_circle',cls:'res-healthy',summary:'Mostly lush green with little browning or spotting — this one looks happy.',
+      tips:['Keep doing what you\'re doing.',`${p.sun} is its happy place — make sure nothing new is shading or scorching it.`,low?'Let the soil dry between waterings; it likes it on the dry side.':'Keep up its regular deep watering.']},
+    thirsty:{label:'Looks thirsty / dry',icon:'water_drop',cls:'res-thirsty',summary:'A fair amount of crispy brown — often a sign of underwatering or heat stress.',
+      tips:['Give it a slow, deep soak at the base until water reaches the roots.',low?'It\'s drought-tough, so soak once then let it dry out — don\'t keep it soggy.':'Check it every couple of days in this heat.','Trim fully crispy leaves so it can focus on new growth.','A little afternoon shade during heat waves helps.']},
+    stress:{label:'Yellowing / stressed',icon:'warning',cls:'res-stress',summary:'Noticeable yellowing. On leaves, that usually points to watering or nutrients.',
+      tips:[low?'On a low-water plant, yellowing is often OVER-watering or poor drainage — let it dry out and make sure it\'s not sitting in water.':'Could be underwatering or hunger — check soil moisture first, then consider a light feed.','Yellow lower leaves can just be normal aging — watch the new growth.','Make sure it\'s getting the right light for its type ('+p.sun+').']},
+    pest:{label:'Possible pests or spots',icon:'pest_control',cls:'res-pest',summary:'Dark speckling or blotches that can indicate pests, fungus, or leaf spot.',
+      tips:['Check leaf undersides for tiny bugs, webbing, or sticky residue.','Remove and trash affected leaves (don\'t compost them).','A blast of water or insecticidal soap knocks back most pests.','For a firm ID of the specific pest/disease, the AI upgrade is worth it.']},
+    info:{label:'Need a clearer photo',icon:'help',cls:'res-info',summary:'I couldn\'t make out enough leaf detail to judge.',
+      tips:['Get closer so the leaves fill most of the frame.','Shoot in bright, even light (avoid harsh shadows).','Focus on any spot that looks off — a specific leaf or branch.']}
+  };
+  const r=R[status];r.source='offline'; if(p.toxic)r.tips.push('Heads-up: this plant is toxic/irritant — wear gloves when trimming.'); return r;
+}
+
+/* ---------- Add a plant (smart) ---------- */
+let addForm='bush', addPhoto=null;
+function spritePickerOptions(sel){return SPRITE_CHOICES.map(gp=>`<optgroup label="${gp.group}">`+gp.forms.map(([f,l])=>`<option value="${f}" ${f===sel?'selected':''}>${l}</option>`).join('')+`</optgroup>`).join('');}
+function openAdd(){
+  addForm='bush'; addPhoto=null;
+  openSheet(`
+    <div class="sheet-top"><div class="sheet-sprite" id="addPrev">${spriteSVG('bush','sprite big')}</div>
+      <div><h2>Add a plant</h2><div class="latin">Snap a photo + name it, and I'll suggest the rest</div></div></div>
+    <div class="form-grid">
+      <div class="field full"><label>Photo (optional — shows in this plant's gallery)</label>
+        <label class="mini-drop" for="addFile" id="addDrop">${ms('photo')} <span>Add a photo</span></label>
+        <input id="addFile" type="file" accept="image/*" capture="environment" style="display:none"></div>
+      <div class="field full"><label>Name *</label>
+        <div style="display:flex;gap:8px"><input id="f_name" placeholder="e.g. Esperanza" style="flex:1" oninput="autoFillDebounced()">
+        <button class="btn primary" style="padding:9px 12px" onclick="smartFill(true)">${ms('auto_awesome')} Smart fill</button></div>
+        <small id="f_hint" style="color:var(--ink-soft);font-weight:600"></small></div>
+      <div class="field"><label>Icon</label><select id="f_form" onchange="pickForm(this.value)">${spritePickerOptions('bush')}</select></div>
+      <div class="field"><label>Latin name</label><input id="f_latin" placeholder="Tecoma stans"></div>
+      <div class="field"><label>Type</label><input id="f_type" placeholder="Flowering shrub"></div>
+      <div class="field"><label>Sun</label><select id="f_sun"><option>Full Sun</option><option>Sun / Part Shade</option><option>Part Shade</option><option>Shade</option></select></div>
+      <div class="field"><label>Water</label><select id="f_water"><option>Low</option><option>Medium</option><option>Thirsty</option></select></div>
+      <div class="field"><label>Septic field</label><select id="f_septic"><option value="safe">Septic-safe</option><option value="caution">Caution</option><option value="avoid">Not safe</option><option value="potted">Potted</option></select></div>
+      <div class="field"><label>Cold behavior</label><select id="f_cold"><option value="hardy">Fully cold-hardy</option><option value="dieback">Dies back, roots survive</option><option value="cover">Half-hardy — cover in a freeze</option><option value="tender">Tender — bring pot inside</option></select></div>
+      <div class="field"><label>Roots</label><input id="f_roots" placeholder="Shallow, tidy"></div>
+      <div class="field"><label>&nbsp;</label><div style="display:flex;gap:14px;align-items:center;padding-top:8px">
+        <label class="cbx"><input type="checkbox" id="f_native"> Native</label><label class="cbx"><input type="checkbox" id="f_toxic"> Toxic</label></div></div>
+      <div class="field full"><label>Note</label><textarea id="f_note" placeholder="Anything to remember…"></textarea></div>
+      <div class="field full"><label>Little motto</label><input id="f_vibe" placeholder="I love the heat!"></div>
+    </div>
+    <div id="f_err" class="ferr"></div>
+    <div class="sheet-actions"><button class="btn primary" onclick="submitAdd()">${ms('check')} Add plant</button>
+      <button class="btn ghost" onclick="closeSheet()">Cancel</button></div>
+    <p class="disclaimer">${ms('auto_awesome')} Smart fill knows the usual garden favorites instantly — and asks the AI gardener about anything it doesn't recognize.</p>`);
+  $('#addFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{addPhoto=rd.result;
+    // downscale
+    const img=new Image();img.onload=()=>{const m=420,sc=Math.min(1,m/Math.max(img.width,img.height)),w=img.width*sc,h=img.height*sc,cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);addPhoto=cv.toDataURL('image/jpeg',0.72);
+      $('#addDrop').innerHTML=`<img src="${addPhoto}" style="width:44px;height:44px;object-fit:cover;border-radius:8px"> <span>Photo added ✓</span>`;};img.src=rd.result;};rd.readAsDataURL(f);});
+}
+function pickForm(f){addForm=f;$('#addPrev').innerHTML=spriteSVG(f,'sprite big');}
+let _t; function autoFillDebounced(){clearTimeout(_t);_t=setTimeout(()=>smartFill(false),500);}
+function smartFill(manual){
+  const name=($('#f_name').value||'').toLowerCase().trim(); if(!name){if(manual)$('#f_hint').textContent='Type a name first.';return;}
+  // pick illustration
+  let form=null; for(const [k,f] of FORM_KEYWORDS){ if(name.includes(k)){form=f;break;} }
+  if(form){ $('#f_form').value=form; pickForm(form); }
+  // fill stats from known library
+  let data=null; for(const rec of KNOWN_PLANTS){ if(rec.match.some(m=>name.includes(m))){data=rec.data;break;} }
+  if(data){
+    fillFields(data);
+    $('#f_hint').innerHTML=`✨ Filled in from a match — tweak anything that's off.`;
+  } else if(manual && PLANTINFO_ENDPOINT){
+    aiFill(name);
+  } else {
+    $('#f_hint').textContent = form?`Picked an icon that fits "${name}". Fill the stats below.`:(manual?`No match found — set the stats below.`:'');
+  }
+}
+function fillFields(data){
+  const set=(id,v)=>{if(v!=null&&v!==''&&$('#'+id))$('#'+id).value=v;};
+  set('f_latin',data.latin); set('f_type',data.type); set('f_sun',data.sun); set('f_water',data.water);
+  set('f_septic',data.septic); set('f_roots',data.roots); set('f_cold',data.cold);
+  if($('#f_native'))$('#f_native').checked=!!data.native; if($('#f_toxic'))$('#f_toxic').checked=!!data.toxic;
+  if(data.vibe)set('f_vibe',data.vibe); if(data.note)set('f_note',data.note);
+}
+async function aiFill(name){
+  $('#f_hint').innerHTML=`🌿 Asking the AI gardener about “${esc(name)}”…`;
+  try{
+    const forms=SPRITE_CHOICES.flatMap(g=>g.forms.map(([key,label])=>({key,label})));
+    const r=await fetch(PLANTINFO_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,forms})});
+    if(!r.ok) throw 0;
+    const d=await r.json();
+    if($('#f_name').value.trim().toLowerCase()!==name.toLowerCase()) return; // she kept typing
+    if(d.unknown){ $('#f_hint').textContent=`Hmm, the AI gardener doesn't know “${name}” — set the stats below.`; return; }
+    fillFields(d);
+    if(d.form && SPRITE_CHOICES.some(g=>g.forms.some(([f])=>f===d.form))){ $('#f_form').value=d.form; pickForm(d.form); }
+    $('#f_hint').innerHTML=`✨ Filled in by the AI gardener — double-check anything that looks off.`;
+  }catch(e){
+    $('#f_hint').textContent='Couldn\'t reach the AI gardener right now — fill in the stats below.';
+  }
+}
+const COLD={hardy:{hardyText:'Cold-hardy here'},dieback:{hardyText:'Root-hardy, dies back',dieback:30},cover:{hardyText:'Cover below ~30°F',cover:30},tender:{hardyText:'Tender — bring in below 40°F',bringIn:40}};
+function submitAdd(){
+  const name=$('#f_name').value.trim();
+  if(!name){const e=$('#f_err');e.textContent='Please give your plant a name.';e.style.display='block';return;}
+  const cold=COLD[$('#f_cold').value]||COLD.hardy;
+  const p=Object.assign({id:'custom-'+Date.now(),custom:true,confidence:'sure',form:addForm,name,
+    latin:$('#f_latin').value.trim(),type:$('#f_type').value.trim()||'My plant',sun:$('#f_sun').value,water:$('#f_water').value,
+    septic:$('#f_septic').value,roots:$('#f_roots').value.trim()||'—',native:$('#f_native').checked,toxic:$('#f_toxic').checked,
+    note:$('#f_note').value.trim(),vibe:$('#f_vibe').value.trim(),photoData:addPhoto||null},cold);
+  PLANTS.push(p);customPlants.push(p);saveJSON(LS_C,customPlants);
+  closeSheet();activeFilter='all';$$('.filter').forEach(b=>b.classList.toggle('on',b.dataset.f==='all'));
+  renderGrid();renderSeptic();$('#count').textContent=PLANTS.length;setTimeout(()=>openPlant(p.id),150);
+}
+
+/* ---------- sheet helpers ---------- */
+function openSheet(inner){const m=$('#modal');m.innerHTML=`<div class="sheet" role="dialog"><button class="close" onclick="closeSheet()">${ms('close')}</button>${inner}</div>`;m.classList.add('show');document.body.style.overflow='hidden';m.scrollTop=0;}
+function closeSheet(){$('#modal').classList.remove('show');document.body.style.overflow='';}
+
+/* ---------- static sections ---------- */
+function renderSeptic(){
+  const g={avoid:PLANTS.filter(p=>p.septic==='avoid'),caution:PLANTS.filter(p=>p.septic==='caution'),safe:PLANTS.filter(p=>p.septic==='safe')};
+  const row=(icon,title,desc,arr,cls)=>arr.length?`<div class="septic-row ${cls}"><div class="septic-head">${ms(icon)} ${title}</div><div class="septic-desc">${desc}</div>
+      <div class="septic-plants">${arr.map(p=>`<button class="mini" onclick="openPlant('${p.id}')"><div class="tile">${spriteSVG(p.form,'sprite mini-s')}</div><span>${p.name}</span></button>`).join('')}</div></div>`:'';
+  $('#septic').innerHTML=
+    row('cancel','Move / remove from the field','Deep or aggressive roots that can invade septic lines — I\'d relocate or pull these off the drain field.',g.avoid,'bad')
+   +row('error','Keep an eye on these','Fine nearby, but give them a few feet of clearance from septic lines to be safe.',g.caution,'warn')
+   +row('check_circle','Happy over the field','Shallow, gentle roots. Totally safe to keep right where they are.',g.safe,'ok');
+}
+function renderMore(){
+  $('#more').innerHTML=MORE_TO_GROW.map(grp=>`
+    <div class="more-group"><div class="more-head">${ms(grp.icon)} ${grp.label}</div>
+      <div class="more-grid">${grp.picks.map(p=>`<div class="shade-card">
+        <div class="tile">${spriteSVG(p.form)}</div>
+        <div class="shade-name">${p.name}</div><div class="shade-latin">${p.latin}</div>
+        <div class="shade-tag ${grp.light==='Full Sun'?'sun':'shade'}">${ms(grp.icon)} ${grp.light}</div>
+        <div class="shade-why">${p.why}</div></div>`).join('')}</div></div>`).join('');
+}
+
+/* ---------- boot ---------- */
+function boot(){
+  customPlants=loadJSON(LS_C); deletedIds=loadJSON(LS_D);
+  customPlants.forEach(p=>PLANTS.push(p));
+  if(deletedIds.length){ for(let i=PLANTS.length-1;i>=0;i--) if(deletedIds.includes(PLANTS[i].id)) PLANTS.splice(i,1); }
+  renderGrid(); renderSeptic(); renderMore();
+  $('#addBtn').addEventListener('click',openAdd);
+  $('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeSheet();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();});
+  $$('.filter').forEach(b=>b.addEventListener('click',()=>filterTo(b.dataset.f)));
+  $('#count').textContent=PLANTS.length;
+  loadWeather();
+}
+document.addEventListener('DOMContentLoaded',boot);
+
+</script>
+</body>
+</html>

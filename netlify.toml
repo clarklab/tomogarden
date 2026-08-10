@@ -1,0 +1,15 @@
+# Netlify settings for Plant Pals (tomogarden)
+# The site is plain HTML in /public — no build step needed.
+# Serverless functions (the AI helpers) live in /netlify/functions.
+
+[build]
+  publish = "public"
+
+[functions]
+  directory = "netlify/functions"
+
+# Cache the social-share image for a week
+[[headers]]
+  for = "/ogimage.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
